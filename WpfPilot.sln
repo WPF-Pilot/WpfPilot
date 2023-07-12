@@ -1,0 +1,78 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33424.131
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7D074176-B8A0-4814-87EB-4C4086C6CE60}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.vsconfig = .vsconfig
+		Directory.build.props = Directory.build.props
+		Directory.build.targets = Directory.build.targets
+		Directory.packages.props = Directory.packages.props
+		global.json = global.json
+		WpfPilot.ruleset = WpfPilot.ruleset
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WpfPilot", "WpfPilot\WpfPilot.csproj", "{883A18A9-A386-4342-AC95-9AFC34913FCA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{232EB0FA-860E-447A-9259-517EE82CE548} = {232EB0FA-860E-447A-9259-517EE82CE548}
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WpfPilot.Tests", "WpfPilot.Tests\WpfPilot.Tests.csproj", "{7ABD1C31-D98A-43D8-8420-3498C4B51ED3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WpfPilot.ExampleApp", "WpfPilot.ExampleApp\WpfPilot.ExampleApp.csproj", "{162F7FF6-D88C-4CDA-8F3D-306D1C22462C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfPilot.Injector", "WpfPilot.Injector\WpfPilot.Injector.csproj", "{232EB0FA-860E-447A-9259-517EE82CE548}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Debug|x64 = Debug|x64
+		Release|x86 = Release|x86
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{883A18A9-A386-4342-AC95-9AFC34913FCA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{883A18A9-A386-4342-AC95-9AFC34913FCA}.Debug|x86.Build.0 = Debug|Any CPU
+		{883A18A9-A386-4342-AC95-9AFC34913FCA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{883A18A9-A386-4342-AC95-9AFC34913FCA}.Debug|x64.Build.0 = Debug|Any CPU
+		{883A18A9-A386-4342-AC95-9AFC34913FCA}.Release|x86.ActiveCfg = Release|Any CPU
+		{883A18A9-A386-4342-AC95-9AFC34913FCA}.Release|x86.Build.0 = Release|Any CPU
+		{883A18A9-A386-4342-AC95-9AFC34913FCA}.Release|x64.ActiveCfg = Release|Any CPU
+		{883A18A9-A386-4342-AC95-9AFC34913FCA}.Release|x64.Build.0 = Release|Any CPU
+
+		{7ABD1C31-D98A-43D8-8420-3498C4B51ED3}.Debug|x86.ActiveCfg = Debug|x86
+		{7ABD1C31-D98A-43D8-8420-3498C4B51ED3}.Debug|x86.Build.0 = Debug|x86
+		{7ABD1C31-D98A-43D8-8420-3498C4B51ED3}.Debug|x64.ActiveCfg = Debug|x64
+		{7ABD1C31-D98A-43D8-8420-3498C4B51ED3}.Debug|x64.Build.0 = Debug|x64
+		{7ABD1C31-D98A-43D8-8420-3498C4B51ED3}.Release|x86.ActiveCfg = Release|x86
+		{7ABD1C31-D98A-43D8-8420-3498C4B51ED3}.Release|x86.Build.0 = Release|x86
+		{7ABD1C31-D98A-43D8-8420-3498C4B51ED3}.Release|x64.ActiveCfg = Release|x64
+		{7ABD1C31-D98A-43D8-8420-3498C4B51ED3}.Release|x64.Build.0 = Release|x64
+
+		{162F7FF6-D88C-4CDA-8F3D-306D1C22462C}.Debug|x86.ActiveCfg = Debug|x86
+		{162F7FF6-D88C-4CDA-8F3D-306D1C22462C}.Debug|x86.Build.0 = Debug|x86
+		{162F7FF6-D88C-4CDA-8F3D-306D1C22462C}.Debug|x64.ActiveCfg = Debug|x64
+		{162F7FF6-D88C-4CDA-8F3D-306D1C22462C}.Debug|x64.Build.0 = Debug|x64
+		{162F7FF6-D88C-4CDA-8F3D-306D1C22462C}.Release|x86.ActiveCfg = Release|x86
+		{162F7FF6-D88C-4CDA-8F3D-306D1C22462C}.Release|x86.Build.0 = Release|x86
+		{162F7FF6-D88C-4CDA-8F3D-306D1C22462C}.Release|x64.ActiveCfg = Release|x64
+		{162F7FF6-D88C-4CDA-8F3D-306D1C22462C}.Release|x64.Build.0 = Release|x64
+
+		{232EB0FA-860E-447A-9259-517EE82CE548}.Debug|x86.ActiveCfg = Debug|x86
+		{232EB0FA-860E-447A-9259-517EE82CE548}.Debug|x86.Build.0 = Debug|x86
+		{232EB0FA-860E-447A-9259-517EE82CE548}.Debug|x64.ActiveCfg = Debug|x64
+		{232EB0FA-860E-447A-9259-517EE82CE548}.Debug|x64.Build.0 = Debug|x64
+		{232EB0FA-860E-447A-9259-517EE82CE548}.Release|x86.ActiveCfg = Release|x86
+		{232EB0FA-860E-447A-9259-517EE82CE548}.Release|x86.Build.0 = Release|x86
+		{232EB0FA-860E-447A-9259-517EE82CE548}.Release|x64.ActiveCfg = Release|x64
+		{232EB0FA-860E-447A-9259-517EE82CE548}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C0AAAFBE-CE94-4D45-83D2-D131EDCCEF1A}
+	EndGlobalSection
+EndGlobal

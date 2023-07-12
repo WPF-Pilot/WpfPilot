@@ -1,0 +1,51 @@
+﻿<Window x:Class="WpfPilot.ExampleApp.MainWindow"
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:local="clr-namespace:WpfPilot.ExampleApp"
+		mc:Ignorable="d"
+		Title="ExampleApp" Height="600" Width="800">
+	<Grid>
+		<TextBox Name="EventDisplay" Height="30" Width="200" Text="Event Displayer" Margin="18,378,582,26"></TextBox>
+		<Button x:Name="HelloWorldButton" Height="40" Width="120" Margin="280,99,400,295" Content="Click here" Click="HelloWorldButton_Click" MouseDoubleClick="HelloWorldButton_DoubleClick" MouseRightButtonDown="HelloWorldButton_RightClick" ToolTipOpening="HelloWorldButton_ToolTipOpening">
+			<Button.ToolTip>
+				<ToolTip>
+					Click Tooltip
+				</ToolTip>
+			</Button.ToolTip>
+		</Button>
+		<CheckBox x:Uid="MainCheckbox" IsChecked="True" Margin="10,33,646,359" Height="100" Width="100" Checked="MainCheckbox_Checked" Unchecked="MainCheckbox_Unchecked">
+			Cool Checkbox
+		</CheckBox>
+		<ListBox Margin="517,290,83,41" Width="200" SelectionChanged="ListBox_SelectionChanged" SelectionMode="Single">
+			<ListBoxItem x:Name="ListBoxItem1">ListBox Item #1</ListBoxItem>
+			<ListBoxItem x:Name="ListBoxItem2">ListBox Item #2</ListBoxItem>
+			<ListBoxItem x:Name="ListBoxItem3">ListBox Item #3</ListBoxItem>
+		</ListBox>
+		<TextBox Name="TextBox1" Height="30" Width="200" Text="Hello! I am a TextBox." Margin="118,216,482,188" TextChanged="TextBox1_TextChanged" GotKeyboardFocus="TextBox1_GotKeyboardFocus" TouchDown="TextBox1_TouchDown" SelectionChanged="TextBox1_SelectionChanged">
+		</TextBox>
+		<Expander Name="ExpanderControl" HorizontalAlignment="Left" Background="LavenderBlush" ExpandDirection="Down"  IsExpanded="False" Width="250" FontSize="20" FontWeight="Bold" Foreground="Green" Height="200" Margin="540,10,0,254" Expanded="ExpanderControl_Expanded" Collapsed="ExpanderControl_Collapsed">
+			<Expander.Content>
+				<ScrollViewer Name="ScrollViewer" Height="100" VerticalAlignment="Top">
+					<StackPanel Orientation = "Vertical">
+						<TextBlock TextWrapping="Wrap" FontSize="14" FontWeight="Light" Foreground="Black">  
+						This is an Expander control. Within this control, all contents will be wrapped.  
+						At run-time, you may expand or collapse this control. Type more text here to be typed.  
+						Jump around and hype. This is an Expander control. Within this control, all contents will be wrapped.  
+						At run-time, you may expand or collapse this control. Type more text here to be typed.  
+						Jump around and hype.
+						</TextBlock>
+						<TextBlock Name="SecondTextBlock" TextWrapping="Wrap" FontSize="14" FontWeight="Light" Foreground="Black">  
+						This is an Expander control. Within this control, all contents will be wrapped.  
+						At run-time, you may expand or collapse this control. Type more text here to be typed.  
+						Jump around and hype. This is an Expander control. Within this control, all contents will be wrapped.  
+						At run-time, you may expand or collapse this control. Type more text here to be typed.  
+						Jump around and hype.
+						</TextBlock>
+					</StackPanel>
+				</ScrollViewer>
+			</Expander.Content>
+		</Expander>
+	</Grid>
+</Window>

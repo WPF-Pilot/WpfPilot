@@ -1,0 +1,61 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <TargetFrameworks>net5.0-windows;netcoreapp3.1;net452</TargetFrameworks>
+    <RootNamespace>WpfPilot</RootNamespace>
+    <UseWpf>true</UseWpf>
+    <UseWindowsForms>true</UseWindowsForms>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <Platforms>AnyCPU</Platforms>
+    <NoWarn>NU5100</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <OutputPath>$(MSBuildThisFileDirectory)\bin\$(Configuration)\</OutputPath>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>WPF Pilot</Title>
+    <Copyright>Copyright (c) 2023</Copyright>
+    <PackageProjectUrl>https://wpfpilot.dev</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/WPF-Pilot/WpfPilot.git</RepositoryUrl>
+    <PackageTags>WPF Automation;WPF Testing;Automation;WPF</PackageTags>
+    <Description>Next generation WPF automation testing.</Description>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>nuget-readme.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageIcon>logo.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony" />
+    <PackageReference Include="Microsoft.CSharp" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="System.ValueTuple" />
+    <Content Include="contentFiles\**">
+      <Pack>True</Pack>
+      <PackagePath>contentFiles</PackagePath>
+      <IncludeInPackage>True</IncludeInPackage>
+      <PackageCopyToOutput>True</PackageCopyToOutput>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE.txt">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\logo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="nuget-readme.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+</Project>
