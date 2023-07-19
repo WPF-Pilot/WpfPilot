@@ -124,6 +124,7 @@ public class UserProfileTests
         // Accept cookies.
         var cookieBanner = appDriver.GetElement(x => x["Name"] == "CookieBanner");
         appDriver.GetElement(x => x["Name"] == "AcceptCookiesButton")
+            .Click()
             .Assert(_ => cookieBanner["Visibility"].To<Visibility>() == Visibility.Hidden);
 
         // Check some interests.
