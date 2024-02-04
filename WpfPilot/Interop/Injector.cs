@@ -7,19 +7,19 @@ using WpfPilot.Utility.WindowsAPI;
 
 internal static class Injector
 {
-	public static void InjectAppDriver(WpfProcess process, string pipeName, string dllPath)
+	public static void InjectAppDriver(WpfProcess process, string pipeName, string dllRootDirectory)
 	{
 		var injectorExe = process.Architecture switch
 		{
-			"x64" => Path.Combine(dllPath, @"WpfPilotResources\x64\WpfPilot.Injector.exe"),
-			"x86" => Path.Combine(dllPath, @"WpfPilotResources\x86\WpfPilot.Injector.exe"),
+			"x64" => Path.Combine(dllRootDirectory, @"WpfPilotResources\x64\WpfPilot.Injector.exe"),
+			"x86" => Path.Combine(dllRootDirectory, @"WpfPilotResources\x86\WpfPilot.Injector.exe"),
 			_ => throw new NotImplementedException($"Process with architecture `{process.Architecture}` is unsupported."),
 		};
 
 		var isElevated = NativeMethods.IsProcessElevated(process.Process);
 		var processStartInfo = new ProcessStartInfo(injectorExe)
 		{
-			Arguments = $"{pipeName}?{dllPath}?{process.Id}",
+			Arguments = $"{pipeName}?{dllRootDirectory}?{process.Id}",
 			UseShellExecute = false,
 			CreateNoWindow = true,
 			WindowStyle = ProcessWindowStyle.Hidden,

@@ -27,18 +27,18 @@ public sealed class AppDriver : IDisposable
 
 		// Inject the app driver into the target process and start the communication channel.
 		var pipeName = $"pid-{appProcess.Id}-{Guid.NewGuid()}";
-		var dllPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+		var dllRootDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 		Retry.With(() =>
 		{
 			appProcess.Refresh();
-			Injector.InjectAppDriver(appProcess, pipeName, dllPath);
+			Injector.InjectAppDriver(appProcess, pipeName, dllRootDirectory);
 		}, retryIntervalMs: 1000, retryCount: 30);
 
 		AppProcess = appProcess;
 		Channel = new NamedPipeClient(pipeName, hasProcessExited: () => AppProcess.Process.HasExited, reinject: () =>
 		{
 			AppProcess.Process.Refresh();
-			Injector.InjectAppDriver(AppProcess, pipeName, dllPath);
+			Injector.InjectAppDriver(AppProcess, pipeName, dllRootDirectory);
 		});
 		Keyboard = new Keyboard(Channel, AppProcess.Process, OnAction);
 		TargetIdToElement = new Dictionary<string, List<Element>>(capacity: 1_000); // Start with a decent capacity.

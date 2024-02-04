@@ -7,21 +7,21 @@ using System.Runtime.InteropServices;
 
 public static class Injector
 {
-	public static void InjectAppDriver(WpfProcess process, string pipeName, string dllPath)
+	public static void InjectAppDriver(WpfProcess process, string pipeName, string dllRootDirectory)
 	{
 		/**
-		 * `injector.{architecture}.dll` is loaded into the remote process which then injects and executes the AppDriver automation DLL.
+		 * `WpfPilot.InjectionDll.(x86|x64).dll` is loaded into the remote process which then injects and executes the AppDriver automation DLL.
 		 * Communication is facilitated by a named pipe which is shared between the remote process and the WpfPilot process.
 		 */
-		var paths = GetDllPaths(process.Architecture, dllPath);
+		var paths = GetDllPaths(process.Architecture, dllRootDirectory);
 		var injectorDllName = paths.Item1;
 		var injectorDllPath = paths.Item2;
 		var appDriverPayloadDllPath = paths.Item3;
 
 		if (!File.Exists(injectorDllPath))
-			throw new FileNotFoundException($"Could not find {injectorDllPath}.");
+			throw new FileNotFoundException($"Could not find injection DLL at `{injectorDllPath}`.");
 		if (!File.Exists(appDriverPayloadDllPath))
-			throw new FileNotFoundException($"Could not find {appDriverPayloadDllPath}.");
+			throw new FileNotFoundException($"Could not find app driver payload DLL at `{appDriverPayloadDllPath}`.");
 
 		var parameters = new[]
 		{
@@ -29,7 +29,7 @@ public static class Injector
 			appDriverPayloadDllPath,
 			"WpfPilot.AppDriverPayload.AppDriverPayload",
 			"StartAppDriver",
-			$"{pipeName}?{dllPath}",
+			$"{pipeName}?{dllRootDirectory}",
 			Path.GetTempFileName(),
 		};
 		var stringForRemoteProcess = string.Join("<|>", parameters);
@@ -109,16 +109,16 @@ public static class Injector
 		}
 	}
 
-	public static Tuple<string, string, string> GetDllPaths(string architecture, string dllPath)
+	public static Tuple<string, string, string> GetDllPaths(string architecture, string dllRootDirectory)
 	{
 		var injectorDllName = architecture switch
 		{
-			"x64" => "injector.x64.dll",
-			"x86" => "injector.x86.dll",
+			"x64" => "WpfPilot.InjectionDll.x64.dll",
+			"x86" => "WpfPilot.InjectionDll.x86.dll",
 			_ => throw new NotImplementedException(architecture),
 		};
-		var injectorDllPath = Path.Combine(dllPath, $@"WpfPilotResources\{injectorDllName}");
-		var appDriverPayloadDllPath = Path.Combine(dllPath, "WpfPilot.dll");
+		var injectorDllPath = Path.Combine(dllRootDirectory, $@"WpfPilotResources\{injectorDllName}");
+		var appDriverPayloadDllPath = Path.Combine(dllRootDirectory, "WpfPilot.dll");
 
 		return new Tuple<string, string, string>(injectorDllName, injectorDllPath, appDriverPayloadDllPath);
 	}

@@ -133,5 +133,7 @@
   <Import Condition="Exists('$(VCTargetsPath)\Microsoft.Cpp.targets')" Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Target Name="AfterBuild" Condition="'$(RootBuild)' == 'True'">
     <MSBuild Projects="$(MSBuildProjectFile)" Properties="RootBuild=False;Configuration=$(Configuration);Platform=x64;PlatFormTarget=x64" />
+    <Copy SourceFiles="..\bin\$(Configuration)\WpfPilot.InjectionDll.x86.dll" DestinationFolder="..\WpfPilot\contentFiles\any\any\WpfPilotResources" SkipUnchangedFiles="false" />
+    <Copy SourceFiles="..\bin\$(Configuration)\WpfPilot.InjectionDll.x64.dll" DestinationFolder="..\WpfPilot\contentFiles\any\any\WpfPilotResources" SkipUnchangedFiles="false" />
   </Target>
 </Project>

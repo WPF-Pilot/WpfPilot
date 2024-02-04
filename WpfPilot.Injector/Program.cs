@@ -20,13 +20,13 @@ internal sealed class Program
 
 		args = args[0].Split('?');
 		var pipeName = args[0]; // Eg `pid-123-{guid}`
-		var dllPath = args[1]; // Eg `C:\code\WpfApp\TestSuite\`
+		var dllRootDirectory = args[1]; // Eg `C:\code\WpfApp\TestSuite\`
 		var processId = int.Parse(args[2]); // Eg `123`
 
 		try
 		{
 			var process = new WpfProcess(Process.GetProcessById(processId));
-			Injector.InjectAppDriver(process, pipeName, dllPath);
+			Injector.InjectAppDriver(process, pipeName, dllRootDirectory);
 		}
 		catch (Exception e)
 		{
