@@ -8,7 +8,7 @@ Next gen automation testing for WPF apps.
 PM > Install-Package WpfPilot
 ```
 
-## 📚 About
+## About
 
 WPF Pilot is a NuGet Package for writing WPF automation tests. It works out of box with no special setup or configuration. WPF Pilot launches your app and injects a DLL to setup a communication channel between your test suite and app. It is built around the same technology as [Snoop](https://github.com/snoopwpf/snoopwpf) and does not use the <ins title="Microsoft UI Automation Framework">UIA</ins> in any way. In addition to automating WPF apps, WPF Pilot supports recording videos and taking screenshots of the app under test.
 
@@ -21,11 +21,11 @@ Guiding principles of WPF Pilot include:
 - Just works. No special configuration or setup should be necessary. Install the package and get to hacking.
 - Minimal yet expressive API. Everything you need and nothing more.
 
-## 🔧 Requirements
+## Requirements
 
 WPF Pilot works on Windows and requires .NET Framework 4.5.2+, .NET Core 3.1+, or .NET 5+.
 
-## 💗 API
+## API
 
 There are only **4** core classes to learn, with a small handful of methods on each class. WPF Pilot strives to keep the API surface minimal, and encourages you to write your own helper methods for your specific domain. For brevity, not every method or class is documented below.
 
@@ -86,7 +86,7 @@ Assert.True(playerHUD["PlayerName"].StartsWith("Erik"));
 - `Keyboard.Type`
 - `Keyboard.Hotkey`
 
-## 🛣️ Roadmap
+## Roadmap
 
 - Low code recorder tool. Generate tests automatically by clicking through the app.
 - Streamlined CEF and WebView2 support.
@@ -94,7 +94,7 @@ Assert.True(playerHUD["PlayerName"].StartsWith("Erik"));
 - Low level input mocking.
 - Minor API improvements.
 
-## ✏️ Full Sample
+## Full Sample
 
 ```csharp
 using WpfPilot;
@@ -139,11 +139,11 @@ public class UserProfileTests
 }
 ```
 
-## 📝 License
+## License
 
 The WPF Pilot split license is viewable [here](LICENSE.txt). For most consumers this is the Apache License, Version 2.0. For larger corporations, an enterprise license is required. This funds continual maintenance, features, and ticket support. It can be purchased [here](https://wpfpilot.dev/pricing).
 
-## 🧪 Troubleshooting
+## Troubleshooting
 
 - Debug logs are stored at `%TEMP%/WpfPilot`
 - If you cloned the project, and built in debug locally, and `AppDriverPayload` is injected into an exe, you can attach Visual Studio to the process and walk through the `AppDriverPayload` code like usual.
