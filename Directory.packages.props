@@ -2,7 +2,7 @@
   <ItemGroup>
     <!-- Do not upgrade CSharp.Scripting version without testing. -->
     <!-- New versions reference System.Collections.Immutable which cannot load via `UnsafeLoadFrom` for unknown reasons. -->
-    <PackageVersion Include="Lib.Harmony" Version="2.2.2" />
+    <PackageVersion Include="Lib.Harmony" Version="2.3.0" />
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="StyleCop.Analyzers" version="1.2.0-beta.435" />
