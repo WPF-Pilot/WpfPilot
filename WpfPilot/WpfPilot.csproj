@@ -7,6 +7,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <Platforms>AnyCPU</Platforms>
     <NoWarn>NU5100</NoWarn>
+    <VersionPrefix>1.0.1</VersionPrefix>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -16,7 +17,7 @@
     <Copyright>Copyright (c) 2023</Copyright>
     <PackageProjectUrl>https://wpfpilot.dev</PackageProjectUrl>
     <RepositoryUrl>https://github.com/WPF-Pilot/WpfPilot.git</RepositoryUrl>
-    <PackageTags>UIA;UIA2;UIA3;Automation;WPF;Test;System.Windows.Automation</PackageTags>
+    <PackageTags>TestStack.White;FlaUI;UIA;UIA2;UIA3;Automation;WPF;Test;System.Windows.Automation</PackageTags>
     <Description>Next generation WPF automation testing.</Description>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
