@@ -25,6 +25,13 @@
 		</ListBox>
 		<TextBox Name="TextBox1" Height="30" Width="200" Text="Hello! I am a TextBox." Margin="118,216,482,188" TextChanged="TextBox1_TextChanged" GotKeyboardFocus="TextBox1_GotKeyboardFocus" TouchDown="TextBox1_TouchDown" SelectionChanged="TextBox1_SelectionChanged">
 		</TextBox>
+		<Menu Margin="313,391,374,116">
+			<MenuItem Header="Menu Header">
+				<MenuItem Header="MenuItemOne" IsCheckable="True" />
+				<Separator/>
+				<MenuItem Header="MenuItemTwo" />
+			</MenuItem>
+		</Menu>
 		<Expander Name="ExpanderControl" HorizontalAlignment="Left" Background="LavenderBlush" ExpandDirection="Down"  IsExpanded="False" Width="250" FontSize="20" FontWeight="Bold" Foreground="Green" Height="200" Margin="540,10,0,254" Expanded="ExpanderControl_Expanded" Collapsed="ExpanderControl_Collapsed">
 			<Expander.Content>
 				<ScrollViewer Name="ScrollViewer" Height="100" VerticalAlignment="Top">
