@@ -7,14 +7,14 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <Platforms>AnyCPU</Platforms>
     <NoWarn>NU5100</NoWarn>
-    <VersionPrefix>1.0.1</VersionPrefix>
+    <VersionPrefix>1.0.2</VersionPrefix>
   </PropertyGroup>
 
   <PropertyGroup>
     <OutputPath>$(MSBuildThisFileDirectory)\bin\$(Configuration)\</OutputPath>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>WPF Pilot</Title>
-    <Copyright>Copyright (c) 2023</Copyright>
+    <Copyright>Copyright (c) 2024</Copyright>
     <PackageProjectUrl>https://wpfpilot.dev</PackageProjectUrl>
     <RepositoryUrl>https://github.com/WPF-Pilot/WpfPilot.git</RepositoryUrl>
     <PackageTags>TestStack.White;FlaUI;UIA;UIA2;UIA3;Automation;WPF;Test;System.Windows.Automation</PackageTags>
