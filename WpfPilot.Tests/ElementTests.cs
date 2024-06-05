@@ -64,6 +64,10 @@ public sealed class ElementTests : AppTestBase
 			.Collapse()
 			.Assert(_ => eventDisplay["Text"] == "ExpanderControl_Collapsed event triggered.");
 
+		// Test menus.
+		appDriver.GetElement(x => x["Header"] == "Menu Header").Click();
+		appDriver.GetElement(x => x["Header"] == "MenuItemOne").Click().Assert(x => x["IsChecked"] == true);
+
 		// Test ScrollIntoView.
 		var scrollViewer = appDriver.GetElement<MyScrollViewer>(x => x["Name"] == "ScrollViewer");
 		var initialOffset = scrollViewer["VerticalOffset"];

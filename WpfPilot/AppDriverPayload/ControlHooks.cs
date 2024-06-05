@@ -88,16 +88,12 @@ internal static class ControlHooks
 		public static bool Prefix(ButtonBase __instance)
 		{
 			var isPressed = (bool) typeof(ButtonBase).GetProperty("IsPressed", Flags).GetValue(__instance);
-			var setIsPressed = typeof(ButtonBase).GetMethod("SetIsPressed", Flags);
+			var methods = ReflectionUtility.GetCandidateMethods(typeof(ButtonBase), "SetIsPressed", Flags, new object[] { true });
 
 			if (!isPressed)
-			{
-				setIsPressed.Invoke(__instance, new object[] { true });
-			}
+				ReflectionUtility.FindAndInvokeBestMatch(methods, __instance, new object[] { true });
 			else if (isPressed)
-			{
-				setIsPressed.Invoke(__instance, new object[] { false });
-			}
+				ReflectionUtility.FindAndInvokeBestMatch(methods, __instance, new object[] { false });
 
 			return false;
 		}
@@ -125,7 +121,10 @@ internal static class ControlHooks
 			MenuItemRole role = (MenuItemRole) typeof(MenuItem).GetProperty("Role", Flags).GetValue(__instance);
 
 			if (role == MenuItemRole.TopLevelHeader || role == MenuItemRole.SubmenuHeader)
-				typeof(MenuItem).GetMethod("ClickHeader", Flags).Invoke(__instance, null);
+			{
+				var methods = ReflectionUtility.GetCandidateMethods(typeof(MenuItem), "ClickHeader", Flags, null);
+				ReflectionUtility.FindAndInvokeBestMatch(methods, __instance, null);
+			}
 
 			// Handle mouse messages b/c they were over me, I just didn't use it
 			e.Handled = true;
@@ -144,7 +143,10 @@ internal static class ControlHooks
 			MenuItemRole role = (MenuItemRole) typeof(MenuItem).GetProperty("Role", Flags).GetValue(__instance);
 
 			if (role == MenuItemRole.TopLevelItem || role == MenuItemRole.SubmenuItem)
-				typeof(MenuItem).GetMethod("ClickItem", Flags).Invoke(__instance, new object[] { true });
+			{
+				var methods = ReflectionUtility.GetCandidateMethods(typeof(MenuItem), "ClickItem", Flags, new object[] { true });
+				ReflectionUtility.FindAndInvokeBestMatch(methods, __instance, new object[] { true });
+			}
 
 			if (e.ChangedButton != MouseButton.Right)
 			{
