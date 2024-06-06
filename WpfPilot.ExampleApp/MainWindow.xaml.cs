@@ -13,6 +13,9 @@ public partial class MainWindow : Window
 		RoutedCommand ctrlA = new();
 		ctrlA.InputGestures.Add(new KeyGesture(Key.A, ModifierKeys.Control));
 		CommandBindings.Add(new CommandBinding(ctrlA, CtrlA_Shortcut));
+
+		OtherWindow otherWindow = new OtherWindow();
+		otherWindow.Show();
 	}
 
 	private void HelloWorldButton_Click(object sender, RoutedEventArgs e)

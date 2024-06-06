@@ -1,0 +1,12 @@
+﻿<Window x:Class="WpfPilot.ExampleApp.OtherWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfPilot.ExampleApp"
+        mc:Ignorable="d"
+        Title="OtherWindow" Height="450" Width="800">
+    <Grid>
+		<CheckBox Content="CoolCheckBox" Margin="255,75,351,303" RenderTransformOrigin="2.195,1.875" />
+	</Grid>
+</Window>

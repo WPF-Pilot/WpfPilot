@@ -67,6 +67,10 @@ public sealed class ElementTests : AppTestBase
 		// Test menus.
 		appDriver.GetElement(x => x["Header"] == "Menu Header").Click();
 		appDriver.GetElement(x => x["Header"] == "MenuItemOne").Click().Assert(x => x["IsChecked"] == true);
+		var menuItemOne = appDriver.GetElement(x => x["Header"] == "MenuItemOne");
+
+		// Test other windows.
+		appDriver.GetElement(x => x.TypeName == "CheckBox" && x["Content"] == "CoolCheckBox").Click().Assert(x => x["IsChecked"] == true);
 
 		// Test ScrollIntoView.
 		var scrollViewer = appDriver.GetElement<MyScrollViewer>(x => x["Name"] == "ScrollViewer");
