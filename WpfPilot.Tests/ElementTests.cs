@@ -70,6 +70,7 @@ public sealed class ElementTests : AppTestBase
 		var menuItemOne = appDriver.GetElement(x => x["Header"] == "MenuItemOne");
 
 		// Test other windows.
+		appDriver.GetElement(x => x["Content"] == "Open other window").Click();
 		appDriver.GetElement(x => x.TypeName == "CheckBox" && x["Content"] == "CoolCheckBox").Click().Assert(x => x["IsChecked"] == true);
 
 		// Test ScrollIntoView.
