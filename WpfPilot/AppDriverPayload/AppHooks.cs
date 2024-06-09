@@ -212,9 +212,10 @@ internal static class AppHooks
 		// HACK: `ShowDialog` blocks the control flow from returning, which WPF Pilot requires.
 		// As a workaround, we replace `ShowDialog` with `Show`. This is unideal because it diverges
 		// from actual app behavior.
-		public static bool Prefix(Window __instance)
+		public static bool Prefix(Window __instance, ref bool? __result)
 		{
 			__instance.Show();
+			__result = true;
 			return false;
 		}
 	}
