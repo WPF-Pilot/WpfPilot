@@ -90,6 +90,6 @@ public partial class MainWindow : Window
 	private void OpenOtherWindow_Click(object sender, RoutedEventArgs e)
 	{
 		OtherWindow otherWindow = new OtherWindow();
-		otherWindow.Show();
+		otherWindow.ShowDialog();
 	}
 }

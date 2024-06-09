@@ -15,9 +15,9 @@ using WpfPilot.Utility;
 // Many WPF controls use the mouse coordinates to determine if an element has been interacted with.
 // Because we cannot fake the mouse coordinates, we need to workaround the limitation by patching various controls to fake mouse positioning.
 // Many techniques on patching the mouse coordinates themself do not work, because the code is security critical, so we're left with this method.
-internal static class ControlHooks
+internal static class AppHooks
 {
-	static ControlHooks()
+	static AppHooks()
 	{
 		// Warmup hooked functions so the IL instructions are in memory.
 		// Otherwise we can occasionally run into "empty body" exceptions.
@@ -206,12 +206,25 @@ internal static class ControlHooks
 		}
 	}
 
+	[HarmonyPatch(typeof(Window), "ShowDialog")]
+	public static class PatchWindowShowDialog
+	{
+		// HACK: `ShowDialog` blocks the control flow from returning, which WPF Pilot requires.
+		// As a workaround, we replace `ShowDialog` with `Show`. This is unideal because it diverges
+		// from actual app behavior.
+		public static bool Prefix(Window __instance)
+		{
+			__instance.Show();
+			return false;
+		}
+	}
+
 	public static void SetButton(MouseButton mouseButton, bool isPressed)
 	{
 		if (mouseButton == MouseButton.Left)
-			ControlHooks.IsLeftMousePressed = isPressed;
+			AppHooks.IsLeftMousePressed = isPressed;
 		else if (mouseButton == MouseButton.Right)
-			ControlHooks.IsRightMousePressed = isPressed;
+			AppHooks.IsRightMousePressed = isPressed;
 	}
 
 	public static void ResetMouseState()
