@@ -86,4 +86,10 @@ public partial class MainWindow : Window
 	{
 		EventDisplay.Text = "Ctrl+A shortcut triggered.";
 	}
+
+	private void OpenOtherWindow_Click(object sender, RoutedEventArgs e)
+	{
+		OtherWindow otherWindow = new OtherWindow();
+		otherWindow.ShowDialog();
+	}
 }

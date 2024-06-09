@@ -75,7 +75,7 @@ public static class AppDriverPayload
 					var treeService = new TreeService(propNames ?? new HashSet<string>());
 					treeService.Construct(rootObject, null, omitChildren: false);
 
-					ControlHooks.EnsureHooked();
+					AppHooks.EnsureHooked();
 
 					try
 					{

@@ -43,7 +43,7 @@ internal static class RaiseEventCommand
 		var raiseTrustedEvent = ReflectionUtility.FindAndInvokeBestMatch;
 		UIHighlight.Select(targetUIElement);
 
-		using var reset = new ScopeGuard(exitAction: ControlHooks.ResetMouseState);
+		using var reset = new ScopeGuard(exitAction: AppHooks.ResetMouseState);
 
 		// Fake mouse state, since devs will typically access and use the mouse device in the event handler.
 		if (routedEventArgs.RoutedEvent.Name.Contains("MouseLeft") ||
@@ -51,20 +51,20 @@ internal static class RaiseEventCommand
 			routedEventArgs.RoutedEvent.Name == "MouseDown" ||
 			routedEventArgs.RoutedEvent.Name == "MouseDoubleClick")
 		{
-			ControlHooks.IsLeftMousePressed = true;
+			AppHooks.IsLeftMousePressed = true;
 		}
 		else if (routedEventArgs.RoutedEvent.Name.Contains("MouseRight"))
 		{
-			ControlHooks.IsRightMousePressed = true;
+			AppHooks.IsRightMousePressed = true;
 		}
 
 		var targets = GetAscendingVisualTree(targetUIElement);
 
 		if (IsMouseEvent(routedEventArgs))
 		{
-			ControlHooks.MouseOverElement.SetValue(InputManager.Current.PrimaryMouseDevice, target);
+			AppHooks.MouseOverElement.SetValue(InputManager.Current.PrimaryMouseDevice, target);
 			foreach (var element in targets)
-				ControlHooks.WriteElementOverElement.Invoke(element, new object[] { ControlHooks.CoreFlags.IsMouseOverCache, true });
+				AppHooks.WriteElementOverElement.Invoke(element, new object[] { AppHooks.CoreFlags.IsMouseOverCache, true });
 		}
 
 		if (routedEventArgs.RoutedEvent.RoutingStrategy == RoutingStrategy.Direct)

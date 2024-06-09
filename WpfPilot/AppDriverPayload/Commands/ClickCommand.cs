@@ -34,7 +34,7 @@ internal static class ClickCommand
 			return;
 
 		UIHighlight.Select(targetUIElement);
-		using var reset = new ScopeGuard(exitAction: ControlHooks.ResetMouseState);
+		using var reset = new ScopeGuard(exitAction: AppHooks.ResetMouseState);
 
 		var mouseButton = (MouseButton) Enum.Parse(typeof(MouseButton), mouseButtonString);
 		var targets = GetAscendingVisualTree(targetUIElement);
@@ -42,14 +42,14 @@ internal static class ClickCommand
 		/**
 		 * Do mouse down events.
 		 */
-		ControlHooks.SetButton(mouseButton, isPressed: true);
+		AppHooks.SetButton(mouseButton, isPressed: true);
 		DoClick(UIElement.PreviewMouseDownEvent, targetUIElement, mouseButton, targets);
 		DoClick(UIElement.MouseDownEvent, targetUIElement, mouseButton, targets);
 
 		/**
 		 * Do mouse up events.
 		 */
-		ControlHooks.SetButton(mouseButton, isPressed: false);
+		AppHooks.SetButton(mouseButton, isPressed: false);
 		DoClick(UIElement.PreviewMouseUpEvent, targetUIElement, mouseButton, targets);
 		DoClick(UIElement.MouseUpEvent, targetUIElement, mouseButton, targets);
 
@@ -69,9 +69,9 @@ internal static class ClickCommand
 		var methods = ReflectionUtility.GetCandidateMethods(typeof(UIElement), "RaiseTrustedEvent", InvokeCommandBindings, args);
 		var raiseTrustedEvent = ReflectionUtility.FindAndInvokeBestMatch;
 
-		ControlHooks.MouseOverElement.SetValue(Mouse.PrimaryDevice, source);
+		AppHooks.MouseOverElement.SetValue(Mouse.PrimaryDevice, source);
 		foreach (var target in targets)
-			ControlHooks.WriteElementOverElement.Invoke(target, new object[] { ControlHooks.CoreFlags.IsMouseOverCache, true });
+			AppHooks.WriteElementOverElement.Invoke(target, new object[] { AppHooks.CoreFlags.IsMouseOverCache, true });
 
 		raiseTrustedEvent(methods, source, args);
 	}
