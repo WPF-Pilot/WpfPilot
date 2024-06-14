@@ -141,7 +141,7 @@ public class UserProfileTests
 
 ## License
 
-The WPF Pilot split license is viewable [here](LICENSE.txt). For most consumers this is the Apache License, Version 2.0. For larger corporations, an enterprise license is required. This funds continual maintenance, features, and ticket support. It can be purchased [here](https://wpfpilot.dev/pricing).
+The WPF Pilot split license is viewable [here](LICENSE.txt). For most consumers this is the Apache License, Version 2.0. For larger corporations, an enterprise license is required. This can be obtained by donating $100 to a charity of your choice, once per year. Full details [here](https://wpfpilot.dev/pricing).
 
 ## Troubleshooting
 
