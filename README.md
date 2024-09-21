@@ -86,6 +86,10 @@ Assert.True(playerHUD["PlayerName"].StartsWith("Erik"));
 - `Keyboard.Type`
 - `Keyboard.Hotkey`
 
+## CI/CD
+
+See this [github action](https://github.com/WPF-Pilot/PaymentCalculator/blob/main/.github/workflows/ui-tests.yml) for an example of how to run your UI tests as part of a CI/CD pipeline. Feel free to copy and modify it for your project.
+
 ## Roadmap
 
 - Low code recorder tool. Generate tests automatically by clicking through the app.

@@ -10,6 +10,6 @@ Aq.ExpressionJsonSerializer - MIT, this covers parts of the `ExpressionInterop` 
 
 ## Notice
 
-Every license was handpicked and evaluated as safe for inclusion in any repo. None of the above licenses require you to publicly release your source code or change your license. Merely that you include a copy of the above licenses if you do publicly release your test suite source code or compiled test suite DLLs. Some portions require specific source files retain their license. For example, editing code in `WpfUtility` requires the edits are also MS-PL.
+Every license was handpicked and evaluated as safe for inclusion in any repo. None of the above licenses require you to publicly release your source code or change your license. Merely that you include a copy of the above licenses if you do publicly release code that includes code copied from this repository. Some portions require specific source files retain their license. For example, editing code in `WpfUtility` requires the edits are also MS-PL.
 
 See the LICENSE in the root directory for the license that covers most functionality.
