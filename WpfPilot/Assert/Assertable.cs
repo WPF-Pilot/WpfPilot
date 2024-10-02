@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using WpfPilot;
 using WpfPilot.Assert.TestFrameworks;
 
@@ -15,19 +16,36 @@ public sealed class Assertable
 		ValueExpression = valueExpression;
 	}
 
-	public Assertable IsTrue(Expression<Func<Element, bool?>> predicateExpression)
+	public Assertable IsTrue(Expression<Func<Element, bool?>> predicateExpression, int timeoutMs = 30_000)
 	{
 		if (predicateExpression == null)
 			throw new ArgumentNullException(nameof(predicateExpression));
 
-		if (!IsNoOp)
+		if (IsNoOp)
+			return this;
+
+		var startTime = DateTime.UtcNow;
+		string? message = null;
+		do
 		{
 			var getValueExpression = CoalesceValueWith(predicateExpression);
-			var message = GetMessageIfFalse(getValueExpression);
+			message = GetMessageIfFalse(getValueExpression);
 
-			if (message != null)
-				TestFrameworkProvider.Throw(message);
+			if (message == null)
+			{
+				// Assertion passed.
+				break;
+			}
+			else
+			{
+				// Wait for 1 second before retrying.
+				Task.Delay(1000).GetAwaiter().GetResult();
+			}
 		}
+		while ((DateTime.UtcNow - startTime).TotalMilliseconds < timeoutMs);
+
+		if (message != null)
+			TestFrameworkProvider.Throw(message);
 
 		return this;
 	}

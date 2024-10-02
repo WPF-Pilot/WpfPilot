@@ -435,14 +435,14 @@ public class Element
 	/// ✏️ element.Assert(x => x["Width"] > 100).Click().Assert(x => x["Text"] == "Clicked!");
 	/// </code>
 	/// </summary>
-	public virtual Element Assert(Expression<Func<Element, bool?>> predicateExpression)
+	public virtual Element Assert(Expression<Func<Element, bool?>> predicateExpression, int timeoutMs = 30_000)
 	{
 		if (predicateExpression == null)
 			throw new ArgumentNullException(nameof(predicateExpression));
 
 		var parameter = DebugValueExpressionVisitor.GetDebugExpresssion(TypeName, this);
 		var assertable = Assertable.FromValueExpression(this, parameter);
-		assertable.IsTrue(predicateExpression);
+		assertable.IsTrue(predicateExpression, timeoutMs);
 
 		return this;
 	}
