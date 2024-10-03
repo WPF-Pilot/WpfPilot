@@ -1,13 +1,14 @@
 ﻿namespace WpfPilot.Utility;
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
 internal static class ThreadUtility
 {
-	public static bool RunOnUIThread(Func<object, Task> action)
+	public static UIThreadRunResult RunOnUIThread(Func<object, Task> action)
 	{
 		foreach (PresentationSource? presentationSource in PresentationSource.CurrentSources)
 		{
@@ -33,11 +34,35 @@ internal static class ThreadUtility
 				// work will run later.
 				result.GetAwaiter().GetResult();
 
-				return true;
+				return UIThreadRunResult.Finished;
 			}
 		}
 
-		return false;
+		return UIThreadRunResult.Unable;
+	}
+
+	public static Task<UIThreadRunResult> RunOnStaThread(Func<Task<UIThreadRunResult>> func)
+	{
+		var tcs = new TaskCompletionSource<UIThreadRunResult>();
+
+		Thread thread = new Thread(() =>
+		{
+			try
+			{
+				var result = func().GetAwaiter().GetResult();
+				tcs.SetResult(result);
+			}
+			catch (Exception ex)
+			{
+				tcs.SetException(ex);
+			}
+		});
+
+		thread.SetApartmentState(ApartmentState.STA);
+		thread.IsBackground = true;
+		thread.Start();
+
+		return tcs.Task;
 	}
 
 	private static T RunInDispatcher<T>(this DispatcherObject? dispatcherObject, Func<T> action, DispatcherPriority priority = DispatcherPriority.Normal)
@@ -50,5 +75,12 @@ internal static class ThreadUtility
 			return action();
 
 		return (T) dispatcher.Invoke(priority, action);
+	}
+
+	internal enum UIThreadRunResult
+	{
+		Unable,
+		Finished,
+		Pending, // Could occur when `ShowDialog` is invoked.
 	}
 }

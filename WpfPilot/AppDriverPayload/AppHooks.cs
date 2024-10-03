@@ -49,9 +49,7 @@ internal static class AppHooks
 			RoutedEvent = MenuItem.MouseUpEvent,
 		});
 
-		var harmony = new Harmony("com.wpfpilot.controlhooks.patch");
-
-		// NOTE: Calling this will also apply `ControlHooks` patches, which can make stack traces look a little funny if a patch fails.
+		var harmony = new Harmony("com.wpfpilot.apphooks.patch");
 		harmony.PatchAll(Assembly.GetExecutingAssembly());
 	}
 
@@ -209,14 +207,11 @@ internal static class AppHooks
 	[HarmonyPatch(typeof(Window), "ShowDialog")]
 	public static class PatchWindowShowDialog
 	{
-		// HACK: `ShowDialog` blocks the control flow from returning, which WPF Pilot requires.
-		// As a workaround, we replace `ShowDialog` with `Show`. This is unideal because it diverges
-		// from actual app behavior.
-		public static bool Prefix(Window __instance, ref bool? __result)
+		public static bool Prefix(Window __instance)
 		{
-			__instance.Show();
-			__result = true;
-			return false;
+			AppHooks.ShowDialogCalled = true;
+			Log.Info($"PatchWindowShowDialog.Prefix. ShowDialogCalled: {AppHooks.ShowDialogCalled}.");
+			return true;
 		}
 	}
 
@@ -234,6 +229,12 @@ internal static class AppHooks
 		IsRightMousePressed = null;
 	}
 
+	public static bool ShowDialogCalled
+	{
+		get => _showDialogCalled;
+		set => _showDialogCalled = value;
+	}
+
 	public static bool? IsLeftMousePressed = null;
 	public static bool? IsRightMousePressed = null;
 	public static FieldInfo MouseOverElement = typeof(MouseDevice).GetField("_mouseOver", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -245,5 +246,6 @@ internal static class AppHooks
 		IsMouseOverCache = 0x00001000,
 	}
 
+	private static volatile bool _showDialogCalled = false;
 	private const BindingFlags Flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.Static;
 }
