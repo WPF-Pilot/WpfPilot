@@ -36,6 +36,8 @@ internal sealed class NamedPipeServer : IDisposable
 
 		void Respond(dynamic response)
 		{
+			if (hasResponded)
+				return;
 			var writer = new StreamWriter(Pipe);
 			var r = MessagePacker.Pack(response);
 			writer.Write(r);

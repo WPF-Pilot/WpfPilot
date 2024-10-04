@@ -11,6 +11,7 @@ using WpfPilot.Interop;
 using WpfPilot.Utility;
 using WpfPilot.Utility.WpfUtility;
 using WpfPilot.Utility.WpfUtility.Tree;
+using static WpfPilot.Utility.ThreadUtility;
 using Command = WpfPilot.Interop.NamedPipeServer.Command;
 
 public static class AppDriverPayload
@@ -24,8 +25,8 @@ public static class AppDriverPayload
 		var pipeName = split[0];
 		var dllPath = split[1];
 
-		var hasUIThreadAccess = ThreadUtility.RunOnUIThread(rootObject => Task.FromResult(true));
-		if (!hasUIThreadAccess)
+		var testRun = RunOnUIThread(rootObject => Task.FromResult(true));
+		if (testRun == UIThreadRunResult.Unable)
 			Exit("Injected into a non-UI thread. This could happen if the app has a boot up screen phase, or the like.");
 
 		try
@@ -66,7 +67,13 @@ public static class AppDriverPayload
 			lock (loopLock)
 			{
 				var command = channel.WaitForNextCommand();
-				var ranOnUIThread = ThreadUtility.RunOnUIThread(async rootObject =>
+
+				var cts = new CancellationTokenSource();
+
+				// Check if a dialog was opened with `ShowDialog` and early return if so, as the main window will be blocked.
+				Task<UIThreadRunResult> showDialogCheckerTask = RunOnStaThread(async () => await CheckIfShowDialogCalled(cts.Token));
+
+				Task<UIThreadRunResult> ranOnUIThreadTask = Task.Run(() => RunOnUIThread(async rootObject =>
 				{
 					var propNames = command.Value?.Kind == nameof(GetVisualTreeCommand) ?
 						PropInfo.GetPropertyValue(command.Value, "PropNames") :
@@ -85,15 +92,25 @@ public static class AppDriverPayload
 					{
 						command.Respond(new { Error = e.ToString() });
 					}
-				});
+				}));
+
+				var firstCompleted = Task.WhenAny(ranOnUIThreadTask, showDialogCheckerTask).GetAwaiter().GetResult();
+				var result = firstCompleted.GetAwaiter().GetResult();
+
+				// Ensure task is cleaned up before continuing.
+				cts.Cancel();
+				showDialogCheckerTask?.GetAwaiter().GetResult();
 
 				// Lost access to UI thread, so we need to reinject or exit.
-				if (!ranOnUIThread)
+				if (result == UIThreadRunResult.Unable)
 				{
 					Log.Info("Lost access to UI thread. Closing command loop.");
 					channel.Dispose();
 					return;
 				}
+
+				if (result == UIThreadRunResult.Pending && !command.CheckHasResponded())
+					command.Respond(new { Value = "UnserializableResult" });
 
 				// Even though ranOnUIThread has returned, there may still be async work to do, since it will return when the first await is hit, NOT when the async work is done.
 				// We are only finished when `command.CheckHasResponded()` is true.
@@ -140,6 +157,27 @@ public static class AppDriverPayload
 				command.Respond(new { Error = $"Unsupported command kind: {command.Value.Kind}" });
 				break;
 		}
+	}
+
+	internal static async Task<UIThreadRunResult> CheckIfShowDialogCalled(CancellationToken token)
+	{
+		while (!AppHooks.ShowDialogCalled)
+		{
+			if (token.IsCancellationRequested)
+				return UIThreadRunResult.Finished;
+
+			try
+			{
+				await Task.Delay(50, token);
+			}
+			catch (TaskCanceledException)
+			{
+				return UIThreadRunResult.Finished;
+			}
+		}
+
+		AppHooks.ShowDialogCalled = false;
+		return UIThreadRunResult.Pending;
 	}
 
 	private static Assembly? AssemblyResolver(object? sender, ResolveEventArgs args, string dllPath)
