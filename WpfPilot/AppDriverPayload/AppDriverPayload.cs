@@ -6,7 +6,6 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using WpfPilot.AppDriverPayload.Commands;
 using WpfPilot.Interop;
 using WpfPilot.Utility;
