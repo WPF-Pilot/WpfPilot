@@ -207,10 +207,10 @@ internal static class AppHooks
 	[HarmonyPatch(typeof(Window), "ShowDialog")]
 	public static class PatchWindowShowDialog
 	{
+		// We need a way to know if `ShowDialog` was called, to avoid blocking.
 		public static bool Prefix(Window __instance)
 		{
 			AppHooks.ShowDialogCalled = true;
-			Log.Info($"PatchWindowShowDialog.Prefix. ShowDialogCalled: {AppHooks.ShowDialogCalled}.");
 			return true;
 		}
 	}

@@ -69,7 +69,10 @@ public static class AppDriverPayload
 				var command = channel.WaitForNextCommand();
 
 				var cts = new CancellationTokenSource();
+
+				// Check if a dialog was opened with `ShowDialog` and early return if so, as the main window will be blocked.
 				Task<UIThreadRunResult> showDialogCheckerTask = RunOnStaThread(async () => await CheckIfShowDialogCalled(cts.Token));
+
 				Task<UIThreadRunResult> ranOnUIThreadTask = Task.Run(() => RunOnUIThread(async rootObject =>
 				{
 					var propNames = command.Value?.Kind == nameof(GetVisualTreeCommand) ?
@@ -83,9 +86,7 @@ public static class AppDriverPayload
 
 					try
 					{
-						Log.Info("In ranOnUIThread block.");
 						await ProcessCommand(command, treeService);
-						Log.Info("After task in ranOnUIThread block.");
 					}
 					catch (Exception e)
 					{
@@ -100,8 +101,6 @@ public static class AppDriverPayload
 				cts.Cancel();
 				showDialogCheckerTask?.GetAwaiter().GetResult();
 
-				Log.Info($"Finished action.");
-
 				// Lost access to UI thread, so we need to reinject or exit.
 				if (result == UIThreadRunResult.Unable)
 				{
@@ -111,10 +110,7 @@ public static class AppDriverPayload
 				}
 
 				if (result == UIThreadRunResult.Pending && !command.CheckHasResponded())
-				{
-					Log.Info("CommandLoopResult.ShowDialogCalled finished");
 					command.Respond(new { Value = "UnserializableResult" });
-				}
 
 				// Even though ranOnUIThread has returned, there may still be async work to do, since it will return when the first await is hit, NOT when the async work is done.
 				// We are only finished when `command.CheckHasResponded()` is true.
@@ -165,13 +161,8 @@ public static class AppDriverPayload
 
 	internal static async Task<UIThreadRunResult> CheckIfShowDialogCalled(CancellationToken token)
 	{
-		var uuid = Guid.NewGuid();
-
-		Log.Info($"In CheckIfShowDialogCalled start. {uuid}");
-
 		while (!AppHooks.ShowDialogCalled)
 		{
-			Log.Info($"In CheckIfShowDialogCalled loop. {uuid}");
 			if (token.IsCancellationRequested)
 				return UIThreadRunResult.Finished;
 
@@ -185,10 +176,7 @@ public static class AppDriverPayload
 			}
 		}
 
-		Log.Info($"In CheckIfShowDialogCalled exit. {uuid}");
-
 		AppHooks.ShowDialogCalled = false;
-
 		return UIThreadRunResult.Pending;
 	}
 
