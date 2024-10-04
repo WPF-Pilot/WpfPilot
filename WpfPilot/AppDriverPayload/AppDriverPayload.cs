@@ -25,8 +25,8 @@ public static class AppDriverPayload
 		var pipeName = split[0];
 		var dllPath = split[1];
 
-		var hasUIThreadAccess = RunOnUIThread(rootObject => Task.FromResult(true));
-		if (hasUIThreadAccess == UIThreadRunResult.Unable)
+		var testRun = RunOnUIThread(rootObject => Task.FromResult(true));
+		if (testRun == UIThreadRunResult.Unable)
 			Exit("Injected into a non-UI thread. This could happen if the app has a boot up screen phase, or the like.");
 
 		try
