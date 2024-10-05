@@ -10,7 +10,7 @@ PM > Install-Package WpfPilot
 
 ## About
 
-WPF Pilot is a NuGet Package for writing WPF automation tests. It works out of box with no special setup or configuration. WPF Pilot launches your app and injects a DLL to setup a communication channel between your test suite and app. It is built around the same technology as [Snoop](https://github.com/snoopwpf/snoopwpf) and does not use the <ins title="Microsoft UI Automation Framework">UIA</ins> in any way. In addition to automating WPF apps, WPF Pilot supports recording videos and taking screenshots of the app under test.
+WPF Pilot is a NuGet Package for writing WPF automation tests. It works out of box with no special setup or configuration. WPF Pilot launches your app and injects a DLL to set up a communication channel between your test suite and app. It is built around the same technology as [Snoop](https://github.com/snoopwpf/snoopwpf) and does not use the <ins title="Microsoft UI Automation Framework">UIA</ins> in any way. In addition to automating WPF apps, WPF Pilot supports recording videos and taking screenshots of the app under test.
 
 WPF Pilot's core is oriented around the **Visual Tree** and works incredibly well with [Snoop](https://github.com/snoopwpf/snoopwpf), which can be used to inspect the Visual Tree and find elements of interest to write tests around. Snoop is not affiliated with WPF Pilot, but is an amazing application you should consider [supporting](https://github.com/sponsors/batzen).
 
