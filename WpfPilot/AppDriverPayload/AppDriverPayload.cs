@@ -100,6 +100,7 @@ public static class AppDriverPayload
 				// Ensure task is cleaned up before continuing.
 				cts.Cancel();
 				showDialogCheckerTask?.GetAwaiter().GetResult();
+				AppHooks.ShowDialogCalled = false;
 
 				// Lost access to UI thread, so we need to reinject or exit.
 				if (result == UIThreadRunResult.Unable)
@@ -109,7 +110,8 @@ public static class AppDriverPayload
 					return;
 				}
 
-				if (result == UIThreadRunResult.Pending && !command.CheckHasResponded())
+				var isHangCommand = command.Value.Kind != nameof(GetVisualTreeCommand) && command.Value.Kind != nameof(ScreenshotCommand);
+				if (result == UIThreadRunResult.Pending && !command.CheckHasResponded() && isHangCommand)
 					command.Respond(new { Value = "UnserializableResult" });
 
 				// Even though ranOnUIThread has returned, there may still be async work to do, since it will return when the first await is hit, NOT when the async work is done.
@@ -176,7 +178,6 @@ public static class AppDriverPayload
 			}
 		}
 
-		AppHooks.ShowDialogCalled = false;
 		return UIThreadRunResult.Pending;
 	}
 
