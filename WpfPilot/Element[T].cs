@@ -131,7 +131,7 @@ public class Element<T> : Element
 		(T) base.InvokeAsync(code);
 
 	/// <inheritdoc />
-	public override T Assert(Expression<Func<Element, bool?>> predicateExpression, int timeoutMs = 30_000) =>
+	public override T Assert(Expression<Func<Element, bool?>> predicateExpression, int timeoutMs = 5_000) =>
 		(T) base.Assert(predicateExpression, timeoutMs);
 
 	/// <inheritdoc />

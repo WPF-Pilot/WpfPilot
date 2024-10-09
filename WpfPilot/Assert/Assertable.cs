@@ -10,13 +10,14 @@ using WpfPilot.Assert.TestFrameworks;
 
 public sealed class Assertable
 {
-	private Assertable(Element value, Expression valueExpression)
+	private Assertable(Element value, Expression valueExpression, Action onCheck)
 	{
 		Value = value;
 		ValueExpression = valueExpression;
+		OnCheck = onCheck;
 	}
 
-	public Assertable IsTrue(Expression<Func<Element, bool?>> predicateExpression, int timeoutMs = 30_000)
+	public Assertable IsTrue(Expression<Func<Element, bool?>> predicateExpression, int timeoutMs = 5_000)
 	{
 		if (predicateExpression == null)
 			throw new ArgumentNullException(nameof(predicateExpression));
@@ -39,6 +40,7 @@ public sealed class Assertable
 			else
 			{
 				// Wait for 1 second before retrying.
+				OnCheck();
 				Task.Delay(1000).GetAwaiter().GetResult();
 			}
 		}
@@ -54,8 +56,8 @@ public sealed class Assertable
 
 	public static implicit operator Element(Assertable source) => source?.Value ?? throw new ArgumentNullException(nameof(source));
 
-	internal static Assertable FromValueExpression(Element value, Expression valueExpression)
-		=> new(value, valueExpression);
+	internal static Assertable FromValueExpression(Element value, Expression valueExpression, Action onCheck)
+		=> new(value, valueExpression, onCheck);
 
 	internal static string? GetMessageIfFalse(Expression<Func<bool?>> predicateExpression)
 	{
@@ -99,4 +101,5 @@ public sealed class Assertable
 	}
 
 	private readonly Expression ValueExpression;
+	private readonly Action OnCheck;
 }
