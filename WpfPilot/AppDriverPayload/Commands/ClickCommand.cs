@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
@@ -76,16 +77,16 @@ internal static class ClickCommand
 		raiseTrustedEvent(methods, source, args);
 	}
 
-	private static IReadOnlyList<UIElement> GetAscendingVisualTree(UIElement element)
+	private static IReadOnlyList<UIElement> GetAscendingVisualTree(DependencyObject element)
 	{
-		var targets = new List<UIElement>();
+		var targets = new List<DependencyObject>();
 		while (element is not null)
 		{
 			targets.Add(element);
-			element = (UIElement) (VisualTreeHelper.GetParent(element) ?? LogicalTreeHelper.GetParent(element));
+			element = VisualTreeHelper.GetParent(element) ?? LogicalTreeHelper.GetParent(element);
 		}
 
-		return targets;
+		return targets.OfType<UIElement>().ToList();
 	}
 
 	public const BindingFlags InvokeCommandBindings = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy;
