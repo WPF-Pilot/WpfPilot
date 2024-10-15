@@ -58,9 +58,9 @@ public sealed class Keyboard
 			// Type the effective key
 			SendInput(low, true, false, false, false);
 			SendInput(low, false, false, false, false);
-
-			OnAction();
 		}
+
+		OnAction();
 	}
 
 	/// <summary>
