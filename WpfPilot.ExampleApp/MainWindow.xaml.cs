@@ -92,4 +92,17 @@ public partial class MainWindow : Window
 		OtherWindow otherWindow = new OtherWindow();
 		otherWindow.ShowDialog();
 	}
+
+	private void OpenMessageBox_Click(object sender, RoutedEventArgs e)
+	{
+		var result = MessageBox.Show("Sample Message Box Text", "A caption.", MessageBoxButton.YesNo);
+		if (result == MessageBoxResult.Yes)
+		{
+			EventDisplay.Text = "Chose Yes.";
+		}
+		else if (result == MessageBoxResult.No)
+		{
+			EventDisplay.Text = "Chose No.";
+		}
+	}
 }
