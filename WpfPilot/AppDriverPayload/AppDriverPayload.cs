@@ -71,7 +71,8 @@ public static class AppDriverPayload
 				var cts = new CancellationTokenSource();
 
 				// Check if a dialog was opened with `ShowDialog` and early return if so, as the main window will be blocked.
-				Task<UIThreadRunResult> showDialogCheckerTask = RunOnStaThread(async () => await CheckIfShowDialogCalled(cts.Token));
+				var timeoutMs = command.Value.Kind == nameof(ClickCommand) ? 4_000 : 9_000;
+				Task<UIThreadRunResult> showDialogCheckerTask = RunOnStaThread(async () => await CheckIfShowDialogCalledOrTimeout(timeoutMs, cts.Token));
 
 				Task<UIThreadRunResult> ranOnUIThreadTask = Task.Run(() => RunOnUIThread(async rootObject =>
 				{
@@ -161,9 +162,10 @@ public static class AppDriverPayload
 		}
 	}
 
-	internal static async Task<UIThreadRunResult> CheckIfShowDialogCalled(CancellationToken token)
+	internal static async Task<UIThreadRunResult> CheckIfShowDialogCalledOrTimeout(int timeoutMs, CancellationToken token)
 	{
-		while (!AppHooks.ShowDialogCalled)
+		var startTime = DateTime.UtcNow;
+		while (!AppHooks.ShowDialogCalled && (DateTime.UtcNow - startTime).TotalMilliseconds < timeoutMs)
 		{
 			if (token.IsCancellationRequested)
 				return UIThreadRunResult.Finished;

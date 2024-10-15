@@ -71,9 +71,7 @@ public sealed class ElementTests : AppTestBase
 
 		// Test other windows.
 		appDriver.GetElement(x => x["Content"] == "Open a message box").Click();
-		appDriver.Keyboard.Press(System.Windows.Input.Key.Tab);
-		appDriver.Keyboard.Press(System.Windows.Input.Key.Enter);
-
+		appDriver.Keyboard.PhysicalPress(System.Windows.Input.Key.Tab, System.Windows.Input.Key.Enter);
 		appDriver.GetElement(x => x["Content"] == "Open other window").Click();
 		appDriver.GetElement(x => x.TypeName == "CheckBox" && x["Content"] == "CoolCheckBox").Click().Assert(x => x["IsChecked"] == true);
 

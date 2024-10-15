@@ -39,6 +39,31 @@ public sealed class Keyboard
 	}
 
 	/// <summary>
+	/// Sends a physical key press to the active application.
+	/// Prefer using `Press` or `Hotkey`, but `PhysicalPress` can be useful for `MessageBox` scenarios.
+	/// <code>
+	/// ✏️ appDriver.Keyboard.PhysicalPress(Key.Tab, Key.Enter);
+	/// </code>
+	/// </summary>
+	public void PhysicalPress(params Key[] keys)
+	{
+		foreach (var key in keys)
+		{
+			var code = KeyInterop.VirtualKeyFromKey(key);
+			if (code == -1)
+				throw new ArgumentException($"Invalid key: {key}");
+
+			var low = (byte) (code & 0xff);
+
+			// Type the effective key
+			SendInput(low, true, false, false, false);
+			SendInput(low, false, false, false, false);
+
+			OnAction();
+		}
+	}
+
+	/// <summary>
 	/// Triggers a `TextCompositionEventArgs` on the currently focused element. This simulates typing on a keyboard.
 	/// <code>
 	/// ✏️ appDriver.Keyboard.Type("Hello world!");
@@ -108,6 +133,7 @@ public sealed class Keyboard
 		OnAction();
 	}
 
+	// From FlaUI.
 	private static void SendInput(ushort keyCode, bool isKeyDown, bool isScanCode, bool isExtended, bool isUnicode)
 	{
 		// Prepare the basic object
