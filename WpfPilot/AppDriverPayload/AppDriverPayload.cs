@@ -89,7 +89,7 @@ public static class AppDriverPayload
 					timeoutMs = 100_000_000;
 				}
 
-				// Check if a dialog was opened with `ShowDialog` or the command timeout and early return if so.
+				// Check if a dialog was opened with `ShowDialog` or a command timeout occurred and early return if so.
 				Task<UIThreadRunResult> showDialogCheckerTask = RunOnStaThread(async () => await CheckIfShowDialogCalledOrTimeout(timeoutMs, cts.Token));
 
 				Task<UIThreadRunResult> ranOnUIThreadTask = Task.Run(() => RunOnUIThread(async rootObject =>
