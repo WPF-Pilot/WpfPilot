@@ -70,8 +70,26 @@ public static class AppDriverPayload
 
 				var cts = new CancellationTokenSource();
 
-				// Check if a dialog was opened with `ShowDialog` and early return if so, as the main window will be blocked.
-				var timeoutMs = command.Value.Kind == nameof(ClickCommand) ? 4_000 : 9_000;
+				// Calculate appropriate timeout for the command.
+				var timeoutMs = 1_000;
+
+				// Give `Invoke` and `InvokeStatic` more time to return, if they return a result.
+				if (command.Value.Kind == nameof(InvokeStaticCommand) || command.Value.Kind == nameof(InvokeCommand))
+				{
+					var code = PropInfo.GetPropertyValue(command.Value, "Code");
+					if (code != null)
+					{
+						if (ArgsMapper.MapSingle(code) is Delegate func && func.Method.ReturnType != typeof(void) && func.Method.ReturnType != typeof(Task))
+							timeoutMs = 9_000;
+					}
+				}
+				else if (command.Value.Kind == nameof(GetVisualTreeCommand) || command.Value.Kind == nameof(ScreenshotCommand))
+				{
+					// `GetVisualTree` and `Screenshot` should sooner crash due to timeouts (in `NamedPipeClient`) than return nothing.
+					timeoutMs = 100_000_000;
+				}
+
+				// Check if a dialog was opened with `ShowDialog` or the command timeout and early return if so.
 				Task<UIThreadRunResult> showDialogCheckerTask = RunOnStaThread(async () => await CheckIfShowDialogCalledOrTimeout(timeoutMs, cts.Token));
 
 				Task<UIThreadRunResult> ranOnUIThreadTask = Task.Run(() => RunOnUIThread(async rootObject =>

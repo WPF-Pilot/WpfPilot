@@ -435,7 +435,7 @@ public class Element
 	/// ✏️ element.Assert(x => x["Width"] > 100).Click().Assert(x => x["Text"] == "Clicked!");
 	/// </code>
 	/// </summary>
-	public virtual Element Assert(Expression<Func<Element, bool?>> predicateExpression, int timeoutMs = 5_000)
+	public virtual Element Assert(Expression<Func<Element, bool?>> predicateExpression, int timeoutMs = 10_000)
 	{
 		if (predicateExpression == null)
 			throw new ArgumentNullException(nameof(predicateExpression));
