@@ -6,6 +6,7 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using WpfPilot.AppDriverPayload.Commands;
 using WpfPilot.Interop;
 using WpfPilot.Utility;
@@ -34,6 +35,11 @@ public static class AppDriverPayload
 			AppDomain.CurrentDomain.AssemblyResolve += (object? sender, ResolveEventArgs args) =>
 				AssemblyResolver(sender, args, dllPath);
 
+			RunOnUIThread(_ =>
+			{
+				Application.Current.DispatcherUnhandledException += ExceptionLog.DispatchHandler($"{pipeName}-crash.txt");
+				return Task.FromResult(true);
+			});
 			AppDomain.CurrentDomain.UnhandledException += ExceptionLog.Handler($"{pipeName}-crash.txt");
 		}
 		catch (Exception e)
