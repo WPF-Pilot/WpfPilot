@@ -1,5 +1,6 @@
 ﻿namespace WpfPilot.ExampleApp;
 
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -104,5 +105,10 @@ public partial class MainWindow : Window
 		{
 			EventDisplay.Text = "Chose No.";
 		}
+	}
+
+	private void ThrowException_Click(object sender, RoutedEventArgs e)
+	{
+		throw new InvalidOperationException("Oh no an unhandled exception!");
 	}
 }

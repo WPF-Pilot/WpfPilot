@@ -15,7 +15,8 @@
 				</ToolTip>
 			</Button.ToolTip>
 		</Button>
-		<Button x:Name="OpenNewWindowButton" Content="Open other window" Click="OpenOtherWindow_Click" Margin="82,218,530,314" />
+		<Button x:Name="ThrowExceptionButton" Content="Throw Exception" Click="ThrowException_Click" Margin="82,218,530,314" />
+		<Button x:Name="OpenNewWindowButton" Content="Open other window" Click="OpenOtherWindow_Click" Margin="82,360,530,172" />
 		<Button x:Name="OpenMessageBoxButton" Content="Open a message box" Click="OpenMessageBox_Click" Margin="82,139,530,393" />
 		<CheckBox x:Uid="MainCheckbox" IsChecked="True" Margin="10,33,646,359" Height="100" Width="100" Checked="MainCheckbox_Checked" Unchecked="MainCheckbox_Unchecked">
 			Cool Checkbox

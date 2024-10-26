@@ -11,11 +11,11 @@ using static WpfPilot.Utility.Retry;
 
 internal sealed class NamedPipeClient : IDisposable
 {
-	public NamedPipeClient(string pipeName, Func<bool> hasProcessExited, Action reinject)
+	public NamedPipeClient(string pipeName, Func<int?> getProcessExitCode, Action reinject)
 	{
 		PipeName = pipeName;
 		Pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut);
-		HasProcessExited = hasProcessExited;
+		GetProcessExitCode = getProcessExitCode;
 		Reinject = reinject;
 		Retry.With(() =>
 		{
@@ -39,13 +39,13 @@ internal sealed class NamedPipeClient : IDisposable
 	{
 		_ = command ?? throw new ArgumentNullException(nameof(command));
 
-		if (HasProcessExited())
-			throw new InvalidOperationException($"App has exited.{ExceptionLog.ReadLog("")}");
+		if (GetProcessExitCode() != null)
+			throw new InvalidOperationException($"App has exited.");
 
 		string? rawMessage = null;
 		Retry.With(() =>
 		{
-			ThrowIfAppExited();
+			ThrowOnAppErrorCode();
 
 			// Connection was severed and we need to reconnect.
 			// This can happen if the app has multiple screens, for example a login window that then launches the main window.
@@ -54,7 +54,7 @@ internal sealed class NamedPipeClient : IDisposable
 				Log.Info("Pipe is reconnecting.");
 				Reinject();
 				Pipe.Connect((int) TimeSpan.FromSeconds(10).TotalMilliseconds);
-				ThrowIfAppExited();
+				ThrowOnAppErrorCode();
 			}
 
 			var writer = new StreamWriter(Pipe);
@@ -72,7 +72,7 @@ internal sealed class NamedPipeClient : IDisposable
 				.GetAwaiter()
 				.GetResult();
 
-			ThrowIfAppExited();
+			ThrowOnAppErrorCode();
 
 			var reader = new StreamReader(Pipe);
 			rawMessage = TimeoutAfter<string?>(reader.ReadLineAsync(), TimeSpan.FromSeconds(10))
@@ -88,12 +88,17 @@ internal sealed class NamedPipeClient : IDisposable
 		if (PropInfo.HasProperty(response, "Error"))
 			throw new InvalidOperationException($"An error response was received from the app.\n{response.Error}");
 
+		ThrowOnAppErrorCode();
+
 		return response;
 	}
 
-	private void ThrowIfAppExited()
+	private void ThrowOnAppErrorCode()
 	{
-		if (!HasProcessExited())
+		var exitCode = GetProcessExitCode();
+
+		// App is still running or exited gracefully.
+		if (GetProcessExitCode() == null || exitCode == 0)
 			return;
 
 		var exceptionMessage = "App has unexpectedly exited.";
@@ -128,5 +133,5 @@ internal sealed class NamedPipeClient : IDisposable
 	private Action Reinject { get; }
 	private string PipeName { get; }
 	private NamedPipeClientStream Pipe { get; }
-	private Func<bool> HasProcessExited { get; }
+	private Func<int?> GetProcessExitCode { get; }
 }
