@@ -3,12 +3,21 @@ namespace WpfPilot.Interop;
 using System;
 using System.Diagnostics;
 using System.IO;
+using WpfPilot.Utility;
 using WpfPilot.Utility.WindowsAPI;
 
 internal static class Injector
 {
 	public static void InjectAppDriver(WpfProcess process, string pipeName, string dllRootDirectory)
 	{
+		if (process.Process.HasExited)
+		{
+			if (process.Process.ExitCode != 0)
+				ProcessUtility.ThrowOnAppErrorCode(process.Process.ExitCode, pipeName); // App crashed.
+			else
+				return; // Nothing to inject into.
+		}
+
 		var injectorExe = process.Architecture switch
 		{
 			"x64" => Path.Combine(dllRootDirectory, @"WpfPilotResources\x64\WpfPilot.Injector.exe"),

@@ -35,17 +35,27 @@ internal sealed class NamedPipeClient : IDisposable
 		Pipe.Dispose();
 	}
 
-	public dynamic GetResponse(object command)
+	public dynamic? GetResponse(object command, bool returnOnCleanExit = false)
 	{
 		_ = command ?? throw new ArgumentNullException(nameof(command));
 
-		if (GetProcessExitCode() != null)
-			throw new InvalidOperationException($"App has exited.");
+		var exitCode = GetProcessExitCode();
+		ProcessUtility.ThrowOnAppErrorCode(exitCode, PipeName);
+
+		if (exitCode == 0)
+		{
+			if (returnOnCleanExit)
+				return null;
+			else
+				throw new InvalidOperationException($"App has exited.");
+		}
 
 		string? rawMessage = null;
 		Retry.With(() =>
 		{
-			ThrowOnAppErrorCode();
+			ProcessUtility.ThrowOnAppErrorCode(GetProcessExitCode(), PipeName);
+			if (returnOnCleanExit && GetProcessExitCode() == 0)
+				return;
 
 			// Connection was severed and we need to reconnect.
 			// This can happen if the app has multiple screens, for example a login window that then launches the main window.
@@ -53,8 +63,12 @@ internal sealed class NamedPipeClient : IDisposable
 			{
 				Log.Info("Pipe is reconnecting.");
 				Reinject();
+
+				if (returnOnCleanExit && GetProcessExitCode() == 0)
+					return;
+
 				Pipe.Connect((int) TimeSpan.FromSeconds(10).TotalMilliseconds);
-				ThrowOnAppErrorCode();
+				ProcessUtility.ThrowOnAppErrorCode(GetProcessExitCode(), PipeName);
 			}
 
 			var writer = new StreamWriter(Pipe);
@@ -72,7 +86,9 @@ internal sealed class NamedPipeClient : IDisposable
 				.GetAwaiter()
 				.GetResult();
 
-			ThrowOnAppErrorCode();
+			ProcessUtility.ThrowOnAppErrorCode(GetProcessExitCode(), PipeName);
+			if (returnOnCleanExit && GetProcessExitCode() == 0)
+				return;
 
 			var reader = new StreamReader(Pipe);
 			rawMessage = TimeoutAfter<string?>(reader.ReadLineAsync(), TimeSpan.FromSeconds(10))
@@ -80,38 +96,23 @@ internal sealed class NamedPipeClient : IDisposable
 				.GetAwaiter()
 				.GetResult();
 
+			if (returnOnCleanExit && GetProcessExitCode() == 0)
+				return;
+
 			if (rawMessage == null)
 				throw new InvalidOperationException("Failed to read response from the app. This is usually caused by the app crashing.");
 		}, retryIntervalMs: 1000, retryCount: 20);
+
+		if (rawMessage == null)
+			return null;
 
 		dynamic response = MessagePacker.Unpack(rawMessage);
 		if (PropInfo.HasProperty(response, "Error"))
 			throw new InvalidOperationException($"An error response was received from the app.\n{response.Error}");
 
-		ThrowOnAppErrorCode();
+		ProcessUtility.ThrowOnAppErrorCode(GetProcessExitCode(), PipeName);
 
 		return response;
-	}
-
-	private void ThrowOnAppErrorCode()
-	{
-		var exitCode = GetProcessExitCode();
-
-		// App is still running or exited gracefully.
-		if (GetProcessExitCode() == null || exitCode == 0)
-			return;
-
-		var exceptionMessage = "App has unexpectedly exited.";
-
-		var crashLogExists = Wait.Until(() => File.Exists($"{PipeName}-crash.txt"), timeoutMs: 500, retryIntervalMs: 100);
-		if (crashLogExists)
-		{
-			var lastUnhandledException = ExceptionLog.ReadLog($"{PipeName}-crash.txt");
-			if (lastUnhandledException.Length != 0)
-				exceptionMessage += $" Last unhandled exception:\n{lastUnhandledException}";
-		}
-
-		throw new RetryException(exceptionMessage);
 	}
 
 	// https://stackoverflow.com/a/22078975

@@ -23,18 +23,20 @@ public sealed class AppDriver : IDisposable
 	private AppDriver(WpfProcess appProcess)
 	{
 		Temp.CleanStaleFiles();
-		ProcessCloseOnParentClose.Add(appProcess.Process);
 
-		// Inject the app driver into the target process and start the communication channel.
-		var pipeName = $"pid-{appProcess.Id}-{Guid.NewGuid()}";
+		AppProcess = appProcess;
+		ProcessCloseOnParentClose.Add(AppProcess.Process);
+
+		// Inject the app driver into the target process.
+		var pipeName = $"pid-{AppProcess.Id}-{Guid.NewGuid()}";
 		var dllRootDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 		Retry.With(() =>
 		{
-			appProcess.Refresh();
-			Injector.InjectAppDriver(appProcess, pipeName, dllRootDirectory);
+			AppProcess.Refresh();
+			Injector.InjectAppDriver(AppProcess, pipeName, dllRootDirectory);
 		}, retryIntervalMs: 1000, retryCount: 30);
 
-		AppProcess = appProcess;
+		// Start the communication channel.
 		Channel = new NamedPipeClient(
 			pipeName,
 			getProcessExitCode: () =>
@@ -598,7 +600,7 @@ public sealed class AppDriver : IDisposable
 		{
 			Kind = nameof(GetVisualTreeCommand),
 			PropNames,
-		});
+		})!;
 
 		// Refresh any tracked elements and return the matched element.
 		RefreshVisualTree(nodes);
@@ -619,7 +621,7 @@ public sealed class AppDriver : IDisposable
 		{
 			Kind = nameof(GetVisualTreeCommand),
 			PropNames,
-		});
+		})!;
 
 		// Refresh any tracked elements and return the matched elements.
 		RefreshVisualTree(nodes);
@@ -647,7 +649,7 @@ public sealed class AppDriver : IDisposable
 		{
 			Kind = nameof(GetVisualTreeCommand),
 			PropNames,
-		});
+		})!;
 
 		RefreshVisualTree(nodes);
 	}
@@ -658,13 +660,14 @@ public sealed class AppDriver : IDisposable
 		if (AppProcess.Process.HasExited)
 			return;
 
-		List<Node> nodes = Channel.GetResponse(new
+		List<Node>? nodes = Channel.GetResponse(new
 		{
 			Kind = nameof(GetVisualTreeCommand),
 			PropNames,
-		});
+		}, returnOnCleanExit: true);
 
-		RefreshVisualTree(nodes);
+		if (nodes != null)
+			RefreshVisualTree(nodes);
 	}
 
 	private void RefreshVisualTree(List<Node> nodes)
