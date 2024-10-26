@@ -35,11 +35,18 @@ public sealed class AppDriver : IDisposable
 		}, retryIntervalMs: 1000, retryCount: 30);
 
 		AppProcess = appProcess;
-		Channel = new NamedPipeClient(pipeName, hasProcessExited: () => AppProcess.Process.HasExited, reinject: () =>
-		{
-			AppProcess.Process.Refresh();
-			Injector.InjectAppDriver(AppProcess, pipeName, dllRootDirectory);
-		});
+		Channel = new NamedPipeClient(
+			pipeName,
+			getProcessExitCode: () =>
+			{
+				AppProcess.Process.Refresh();
+				return AppProcess.Process.HasExited ? AppProcess.Process.ExitCode : null;
+			},
+			reinject: () =>
+			{
+				AppProcess.Process.Refresh();
+				Injector.InjectAppDriver(AppProcess, pipeName, dllRootDirectory);
+			});
 		Keyboard = new Keyboard(Channel, AppProcess.Process, OnAction);
 		TargetIdToElement = new Dictionary<string, List<Element>>(capacity: 1_000); // Start with a decent capacity.
 
@@ -647,6 +654,10 @@ public sealed class AppDriver : IDisposable
 
 	private void OnAction()
 	{
+		// No-op if app has exited, otherwise this method would incorrectly throw.
+		if (AppProcess.Process.HasExited)
+			return;
+
 		List<Node> nodes = Channel.GetResponse(new
 		{
 			Kind = nameof(GetVisualTreeCommand),

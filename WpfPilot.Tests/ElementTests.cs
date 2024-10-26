@@ -1,5 +1,6 @@
 ﻿namespace WpfPilot.Tests;
 
+using System;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -7,6 +8,7 @@ using NUnit.Framework;
 using WpfPilot;
 using WpfPilot.Tests.Elements;
 using WpfPilot.Tests.TestUtility;
+using WpfPilot.Utility;
 
 [TestFixture]
 public sealed class ElementTests : AppTestBase
@@ -118,6 +120,31 @@ public sealed class ElementTests : AppTestBase
 
 		AssertImage.ExistsAndCleanup("%TEMP%/checkbox.png");
 		AssertImage.ExistsAndCleanup("./checkbox.jpg");
+	}
+
+	[TestCase(0)]
+	[TestCase(1)]
+	public void TestShutdown(int exitCode)
+	{
+		using var appDriver = AppDriver.Launch(ExePath);
+		if (exitCode == 0)
+			Assert.DoesNotThrow(() => appDriver.RunCode(app => app.Shutdown(exitCode)));
+		else
+			Assert.Throws<Retry.RetryException>(() => appDriver.RunCode(app => app.Shutdown(exitCode)));
+	}
+
+	[Test]
+	public void TestUserClose()
+	{
+		using var appDriver = AppDriver.Launch(ExePath);
+		Assert.DoesNotThrow(() => appDriver.RunCode(app => app.MainWindow.Close()));
+	}
+
+	[Test]
+	public void TestExceptionClose()
+	{
+		using var appDriver = AppDriver.Launch(ExePath);
+		Assert.Throws<InvalidOperationException>(() => appDriver.GetElement(x => x["Name"] == "ThrowExceptionButton").Click());
 	}
 
 	private string ExePath { get; set; } = "";

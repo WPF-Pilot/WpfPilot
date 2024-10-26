@@ -13,7 +13,7 @@ public sealed class InteropTests
 		dynamic? response = null;
 		var clientThread = new Thread(() =>
 		{
-			using var client = new NamedPipeClient(nameof(InteropTests), () => false, () => { });
+			using var client = new NamedPipeClient(nameof(InteropTests), () => null, () => { });
 			response = client.GetResponse(new { Command = "Ping\n123", TheInt = 1, TheDouble = 3.0 });
 		});
 		var serverThread = new Thread(() =>
