@@ -203,7 +203,7 @@ public sealed class AppDriver : IDisposable
 	/// Finds a WPF element matching the given criteria. No order is guaranteed.
 	/// `T` must be a subclass of `Element` and have a constructor that takes a single `Element` argument.
 	/// <code>
-	/// ✏️ appDriver.GetElement<MyCustomButton>(x => x["Text"] == "Enter A Password");
+	/// ✏️ appDriver.GetElement&lt;MyCustomButton&gt;(x => x["Text"] == "Enter A Password");
 	/// </code>
 	/// </summary>
 	/// <exception cref="System.TimeoutException">Thrown when no element matching the criteria is found within timeoutMs.</exception>
@@ -286,7 +286,7 @@ public sealed class AppDriver : IDisposable
 	/// Returns an empty list if no elements are found. No order is guaranteed.
 	/// `T` must be a subclass of `Element` and have a constructor that takes a single `Element` argument.
 	/// <code>
-	/// ✏️ appDriver.GetElements<MyCustomListItem>(x => x["Name"].StartsWith("ListItem"));
+	/// ✏️ appDriver.GetElements&lt;MyCustomListItem&gt;(x => x["Name"].StartsWith("ListItem"));
 	/// </code>
 	/// </summary>
 	public IReadOnlyList<T> GetElements<T>(Func<Element, bool?> matcher, int timeoutMs = 30_000)

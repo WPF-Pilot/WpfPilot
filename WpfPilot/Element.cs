@@ -411,7 +411,7 @@ public class Element
 
 	/// <summary>
 	/// <code>
-	/// ✏️ element.SetProperty<Button, bool>("IsOpen", x => !x.IsOpen);
+	/// ✏️ element.SetProperty&lt;Button, bool&gt;("IsOpen", x => !x.IsOpen);
 	/// </code>
 	/// </summary>
 	public virtual Element SetProperty<TInput, TOutput>(string propertyName, Expression<Func<TInput, TOutput>> getValue)
