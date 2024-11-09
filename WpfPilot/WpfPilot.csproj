@@ -7,7 +7,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <Platforms>AnyCPU</Platforms>
     <NoWarn>NU5100;CS1570;CS1587;CS1591</NoWarn>
-    <VersionPrefix>1.2.4</VersionPrefix>
+    <VersionPrefix>1.2.5</VersionPrefix>
   </PropertyGroup>
 
   <PropertyGroup>
