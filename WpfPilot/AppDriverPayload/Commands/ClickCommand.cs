@@ -17,6 +17,57 @@ using static WpfPilot.Interop.NamedPipeServer;
 
 internal static class ClickCommand
 {
+    public static void Process(Command command, TreeItem appRoot)
+    {
+        var targetIdString = PropInfo.GetPropertyValue(command.Value, "TargetId") ?? throw new ArgumentNullException("Missing TargetId property.");
+        if (!Guid.TryParse(targetIdString, out Guid targetId))
+            throw new ArgumentException($"Invalid TargetId `{targetIdString}`");
+
+        var target = TreeItem.GetTarget(appRoot, targetId) ?? throw new InvalidOperationException("Stale element. Cannot find the target element in the Visual Tree.");
+        var mouseButtonString = PropInfo.GetPropertyValue(command.Value, "MouseButton") ?? throw new ArgumentNullException("Missing MouseButton property.");
+        if (mouseButtonString != "Right" && mouseButtonString != "Left")
+            throw new ArgumentException($"Invalid MouseButton `{mouseButtonString}`. Expected `Left` or `Right`.");
+
+        var targetUIElement = target as UIElement;
+
+        if (targetUIElement is null)
+            return;
+
+        UIHighlight.Select(targetUIElement);
+        using var reset = new ScopeGuard(exitAction: AppHooks.ResetMouseState);
+
+        var mouseButton = (MouseButton)Enum.Parse(typeof(MouseButton), mouseButtonString);
+        var targets = GetAscendingVisualTree(targetUIElement);
+
+        AppHooks.SetButton(mouseButton, isPressed: true);
+        DoClick(UIElement.PreviewMouseDownEvent, targetUIElement, mouseButton, targets);
+        DoClick(UIElement.MouseDownEvent, targetUIElement, mouseButton, targets);
+
+        AppHooks.SetButton(mouseButton, isPressed: false);
+        DoClick(UIElement.PreviewMouseUpEvent, targetUIElement, mouseButton, targets);
+        DoClick(UIElement.MouseUpEvent, targetUIElement, mouseButton, targets);
+
+        if (mouseButton == MouseButton.Right)
+        {
+            OpenContextMenu(targetUIElement);
+        }
+
+        command.Respond(new { Success = true });
+    }
+
+    private static void OpenContextMenu(UIElement targetElement)
+    {
+        var contextMenu = targetElement.ContextMenu;
+        if (contextMenu != null)
+        {
+            contextMenu.PlacementTarget = targetElement;
+            contextMenu.IsOpen = true;
+        }
+    }
+
+    // ... (rest of the existing methods)
+}
+{
 	public static void Process(Command command, TreeItem appRoot)
 	{
 		var targetIdString = PropInfo.GetPropertyValue(command.Value, "TargetId") ?? throw new ArgumentNullException("Missing TargetId property.");
