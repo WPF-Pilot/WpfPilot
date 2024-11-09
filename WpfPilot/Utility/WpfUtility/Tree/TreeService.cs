@@ -20,6 +20,87 @@ using WpfPilot.Utility.WpfUtility.Helpers;
 
 internal sealed class TreeService : IDisposable, INotifyPropertyChanged
 {
+    // ... (existing code)
+
+    public IEnumerable GetChildren(TreeItem treeItem)
+    {
+        if (treeItem.OmitChildren)
+        {
+            return Enumerable.Empty<object>();
+        }
+
+        return this.GetChildren(treeItem.Target);
+    }
+
+    public IEnumerable GetChildren(object target)
+    {
+        if (target is not DependencyObject dependencyObject || (target is Visual == false && target is Visual3D == false))
+        {
+            yield break;
+        }
+
+        var childrenCount = VisualTreeHelper.GetChildrenCount(dependencyObject);
+
+        for (var i = 0; i < childrenCount; i++)
+        {
+            var child = VisualTreeHelper.GetChild(dependencyObject, i);
+            yield return child;
+        }
+
+        // Add support for ContextMenu items
+        if (dependencyObject is FrameworkElement frameworkElement && frameworkElement.ContextMenu != null)
+        {
+            foreach (var item in frameworkElement.ContextMenu.Items)
+            {
+                yield return item;
+            }
+        }
+    }
+
+    public TreeItem Construct(object target, TreeItem? parent, bool omitChildren = false)
+    {
+        var treeItem = target switch
+        {
+            // ... (existing cases)
+            MenuItem typedTarget => new MenuItemTreeItem(typedTarget, parent, this),
+            ContextMenu typedTarget => new ContextMenuTreeItem(typedTarget, parent, this),
+            _ => new TreeItem(target, parent, this)
+        };
+
+        // ... (rest of the existing code)
+    }
+
+    // ... (rest of the existing methods)
+}
+
+internal class MenuItemTreeItem : TreeItem
+{
+    public MenuItemTreeItem(MenuItem target, TreeItem? parent, TreeService treeService)
+        : base(target, parent, treeService)
+    {
+    }
+
+    public override IEnumerable GetChildren()
+    {
+        var menuItem = (MenuItem)Target;
+        return menuItem.Items.Cast<object>();
+    }
+}
+
+internal class ContextMenuTreeItem : TreeItem
+{
+    public ContextMenuTreeItem(ContextMenu target, TreeItem? parent, TreeService treeService)
+        : base(target, parent, treeService)
+    {
+    }
+
+    public override IEnumerable GetChildren()
+    {
+        var contextMenu = (ContextMenu)Target;
+        return contextMenu.Items.Cast<object>();
+    }
+}
+{
 	public List<Dictionary<string, object?>> AllNodes;
 	private TreeItem? rootTreeItem;
 	private HashSet<string> propNames;
