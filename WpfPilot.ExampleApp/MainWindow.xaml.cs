@@ -36,6 +36,11 @@ public partial class MainWindow : Window
 		EventDisplay.Text = "HelloWorldButton_ToolTipOpening event triggered.";
 	}
 
+	private void HelloWorldContextMenuFile_Click(object sender, RoutedEventArgs e)
+	{
+		EventDisplay.Text = "HelloWorldContextMenuFile_Click event triggered.";
+	}
+
 	private void MainCheckbox_Checked(object sender, RoutedEventArgs e)
 	{
 		EventDisplay.Text = "MainCheckbox_Checked event triggered.";

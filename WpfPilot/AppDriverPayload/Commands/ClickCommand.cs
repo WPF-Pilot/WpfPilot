@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using WpfPilot.AppDriverPayload;
@@ -53,6 +54,17 @@ internal static class ClickCommand
 		AppHooks.SetButton(mouseButton, isPressed: false);
 		DoClick(UIElement.PreviewMouseUpEvent, targetUIElement, mouseButton, targets);
 		DoClick(UIElement.MouseUpEvent, targetUIElement, mouseButton, targets);
+
+		// Open ContextMenu if applicable.
+		if (mouseButton == MouseButton.Right && targetUIElement is DependencyObject dp)
+		{
+			if (dp.GetValue(ContextMenuService.ContextMenuProperty) is ContextMenu cm)
+			{
+				cm.PlacementTarget = targetUIElement;
+				cm.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+				cm.IsOpen = true;
+			}
+		}
 
 		command.Respond(new { Success = true });
 	}

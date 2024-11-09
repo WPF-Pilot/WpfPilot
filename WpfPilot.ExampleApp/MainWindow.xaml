@@ -14,6 +14,17 @@
 					Click Tooltip
 				</ToolTip>
 			</Button.ToolTip>
+			<Button.ContextMenu>
+				<ContextMenu Name="cm">
+					<MenuItem Name="FileContextMenuItem"  Header="File" Click="HelloWorldContextMenuFile_Click"/>
+					<MenuItem Header="Save" />
+					<MenuItem Header="SaveAs" />
+					<MenuItem Header="Recent Files">
+						<MenuItem Header="ReadMe.txt" />
+						<MenuItem Header="Schedule.xls" />
+					</MenuItem>
+				</ContextMenu>
+			</Button.ContextMenu>
 		</Button>
 		<Button x:Name="ThrowExceptionButton" Content="Throw Exception" Click="ThrowException_Click" Margin="82,218,530,314" />
 		<Button x:Name="OpenNewWindowButton" Content="Open other window" Click="OpenOtherWindow_Click" Margin="82,360,530,172" />
