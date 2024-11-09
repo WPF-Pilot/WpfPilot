@@ -71,6 +71,13 @@ public sealed class ElementTests : AppTestBase
 		appDriver.GetElement(x => x["Header"] == "MenuItemOne").Click().Assert(x => x["IsChecked"] == true);
 		var menuItemOne = appDriver.GetElement(x => x["Header"] == "MenuItemOne");
 
+		// Test context menus.
+		appDriver.GetElement(x => x["Name"] == "HelloWorldButton")
+			.RightClick();
+		appDriver.GetElement(x => x["Name"] == "FileContextMenuItem")
+			.Click()
+			.Assert(_ => eventDisplay["Text"] == "HelloWorldContextMenuFile_Click event triggered.");
+
 		// Test other windows.
 		appDriver.GetElement(x => x["Content"] == "Open a message box").Click();
 		appDriver.Keyboard.PhysicalPress(System.Windows.Input.Key.Tab, System.Windows.Input.Key.Enter);

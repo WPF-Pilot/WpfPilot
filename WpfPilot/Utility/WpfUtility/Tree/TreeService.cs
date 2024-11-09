@@ -85,6 +85,7 @@ internal sealed class TreeService : IDisposable, INotifyPropertyChanged
 			ResourceDictionaryWrapper typedTarget => new ResourceDictionaryTreeItem(typedTarget, parent, this),
 			ResourceDictionary typedTarget => new ResourceDictionaryTreeItem(typedTarget, parent, this),
 			System.Windows.Application typedTarget => new ApplicationTreeItem(typedTarget, parent, this),
+			AppRoots typedTarget => new AppRootsTreeItem(typedTarget, parent, this),
 			Window typedTarget => new WindowTreeItem(typedTarget, parent, this),
 			Popup typedTarget => new PopupTreeItem(typedTarget, parent, this),
 			System.Windows.Controls.Image typedTarget => new ImageTreeItem(typedTarget, parent, this),

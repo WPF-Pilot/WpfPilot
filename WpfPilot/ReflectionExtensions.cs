@@ -83,6 +83,25 @@ public static class ReflectionExtensions
 		return (T) fieldInfo.GetValue(obj)!;
 	}
 
+	public static void SetField<T>(this object obj, string fieldName, T value)
+	{
+		var fieldInfos = obj.GetType().GetFields(InvokeInstanceBindings)
+			.Where(x => x.Name == fieldName && x.FieldType == typeof(T))
+			.ToList();
+
+		fieldInfos.Sort((x, y) =>
+		{
+			// Prefer public fields, then internal, then private. `IsAssembly` == internal.
+			var xAccess = x.IsPublic ? 0 : x.IsAssembly ? 1 : 2;
+			var yAccess = y.IsPublic ? 0 : y.IsAssembly ? 1 : 2;
+			return xAccess - yAccess;
+		});
+
+		var fieldInfo = fieldInfos.FirstOrDefault() ?? throw new ArgumentException($"No field found with name `{fieldName}` on type `{obj.GetType().Name}`.");
+
+		fieldInfo.SetValue(obj, value);
+	}
+
 	public static T Property<T>(this object obj, string propertyName)
 	{
 		var propertyInfos = obj.GetType().GetProperties(InvokeInstanceBindings)
@@ -92,6 +111,17 @@ public static class ReflectionExtensions
 		var propertyInfo = propertyInfos.FirstOrDefault() ?? throw new ArgumentException($"No property found with name `{propertyName}` on type `{obj.GetType().Name}`.");
 
 		return (T) propertyInfo.GetValue(obj)!;
+	}
+
+	public static void SetProperty<T>(this object obj, string propertyName, T value)
+	{
+		var propertyInfos = obj.GetType().GetProperties(InvokeInstanceBindings)
+			.Where(x => x.Name == propertyName && x.PropertyType == typeof(T))
+			.ToList();
+
+		var propertyInfo = propertyInfos.FirstOrDefault() ?? throw new ArgumentException($"No property found with name `{propertyName}` on type `{obj.GetType().Name}`.");
+
+		propertyInfo.SetValue(obj, value);
 	}
 
 	private const BindingFlags InvokeAllBindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy;
