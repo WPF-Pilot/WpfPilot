@@ -76,8 +76,7 @@ public sealed class ElementTests : AppTestBase
 			.RightClick();
 		appDriver.GetElement(x => x["Name"] == "FileContextMenuItem")
 			.Click()
-			.Click();
-			//.Assert(_ => eventDisplay["Text"] == "HelloWorldContextMenuFile_Click event triggered.");
+			.Assert(_ => eventDisplay["Text"] == "HelloWorldContextMenuFile_Click event triggered.");
 
 		// Test other windows.
 		appDriver.GetElement(x => x["Content"] == "Open a message box").Click();

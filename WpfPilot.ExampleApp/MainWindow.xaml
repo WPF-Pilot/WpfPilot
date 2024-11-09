@@ -26,6 +26,21 @@
 				</ContextMenu>
 			</Button.ContextMenu>
 		</Button>
+		<ToggleButton x:Name="TogglePopupButton" Width="218" HorizontalAlignment="Left" RenderTransformOrigin="2.22,-6.78" Margin="82,23,0,510">
+			<StackPanel>
+				<TextBlock VerticalAlignment="Center" HorizontalAlignment="Center">
+			<Run Text="Is button toggled? " />
+			<Run Text="{Binding IsChecked, ElementName=TogglePopupButton}" />
+				</TextBlock>
+				<Popup Name="myPopup" IsOpen="{Binding IsChecked, ElementName=TogglePopupButton}">
+					<Border BorderThickness="1">
+						<TextBlock Name="myPopupText" Background="LightBlue" Foreground="Blue" Padding="30">
+							Popup Text
+						</TextBlock>
+					</Border>
+				</Popup>
+			</StackPanel>
+		</ToggleButton>
 		<Button x:Name="ThrowExceptionButton" Content="Throw Exception" Click="ThrowException_Click" Margin="82,218,530,314" />
 		<Button x:Name="OpenNewWindowButton" Content="Open other window" Click="OpenOtherWindow_Click" Margin="82,360,530,172" />
 		<Button x:Name="OpenMessageBoxButton" Content="Open a message box" Click="OpenMessageBox_Click" Margin="82,139,530,393" />

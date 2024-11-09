@@ -1,6 +1,8 @@
 ﻿namespace WpfPilot.Utility;
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,11 +12,16 @@ internal static class ThreadUtility
 {
 	public static UIThreadRunResult RunOnUIThread(Func<object, Task> action)
 	{
+		var presentationSources = new List<PresentationSource>();
 		foreach (PresentationSource? presentationSource in PresentationSource.CurrentSources)
 		{
-			if (presentationSource is null)
+			if (presentationSource == null)
 				continue;
+			presentationSources.Add(presentationSource);
+		}
 
+		foreach (var presentationSource in presentationSources)
+		{
 			var rootVisual = presentationSource.RunInDispatcher(() => presentationSource.RootVisual);
 
 			object rootObject = rootVisual;
@@ -25,9 +32,11 @@ internal static class ThreadUtility
 				continue;
 
 			var dispatcher = (rootObject as DispatcherObject)?.Dispatcher ?? presentationSource.Dispatcher;
-			if (dispatcher != null && rootObject is Application)
+			if (dispatcher != null && rootObject is Application app)
 			{
-				var result = dispatcher.InvokeAsync(async () => { await action(rootObject); });
+				var roots = presentationSources.Where(p => p != presentationSource).Select(x => x.RootVisual).ToList();
+				var appRoot = new AppRoots(app, roots);
+				var result = dispatcher.InvokeAsync(async () => { await action(appRoot); });
 
 				// WARN: This does NOT guarantee that the async action has completed, merely that it has run up to the first await.
 				// Once the first await is hit, the dispatcher will return to the main loop and continue processing messages, and the remainder of the async
