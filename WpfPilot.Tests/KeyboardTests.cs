@@ -23,7 +23,7 @@ public sealed class KeyboardTests : AppTestBase
 		using var appDriver = AppDriver.Launch(ExePath);
 		var eventDisplay = appDriver.GetElement(x => x["Name"] == "EventDisplay");
 
-		appDriver.Keyboard.Hotkey(ModifierKeys.Control, Key.A);
+		appDriver.Keyboard.Press(Key.LeftCtrl, Key.A);
 		Assert.AreEqual("Ctrl+A shortcut triggered.", eventDisplay["Text"]);
 
 		var textbox = appDriver.GetElement(x => x["Name"] == "TextBox1");
