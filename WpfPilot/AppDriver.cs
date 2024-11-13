@@ -49,7 +49,7 @@ public sealed class AppDriver : IDisposable
 				AppProcess.Process.Refresh();
 				Injector.InjectAppDriver(AppProcess, pipeName, dllRootDirectory);
 			});
-		Keyboard = new Keyboard(Channel, AppProcess.Process, OnAction);
+		Keyboard = new Keyboard(OnAction);
 		TargetIdToElement = new Dictionary<string, List<Element>>(capacity: 1_000); // Start with a decent capacity.
 
 		// This is the default set of properties we retrieve, however devs can add more properties to this set.

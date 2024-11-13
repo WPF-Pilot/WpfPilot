@@ -2,133 +2,116 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Windows;
 using System.Windows.Input;
-using WpfPilot.AppDriverPayload;
-using WpfPilot.AppDriverPayload.Commands;
-using WpfPilot.Interop;
 using WpfPilot.Utility;
 using WpfPilot.Utility.WindowsAPI;
 
 public sealed class Keyboard
 {
-	internal Keyboard(NamedPipeClient channel, Process process, Action onAction)
+	internal Keyboard(Action onAction)
 	{
-		Channel = channel ?? throw new ArgumentNullException(nameof(channel));
 		OnAction = onAction ?? throw new ArgumentNullException(nameof(onAction));
-		Process = process ?? throw new ArgumentNullException(nameof(process));
 	}
 
 	/// <summary>
-	/// Sends a key press message to the application. For modifier key support such as `Ctrl` and `Shift`, use `Keyboard.Hotkey` instead.
+	/// Sends a physical key press to the active application with full modifier key support.
+	/// When modifier keys (Ctrl, Alt, Shift) are encountered, they remain held for subsequent keys.
 	/// <code>
-	/// ✏️ appDriver.Keyboard.Press(Key.A, Key.B, Key.C);
+	/// appDriver.Keyboard.Press(Key.LeftCtrl, Key.A); // Ctrl+A to select all
+	/// appDriver.Keyboard.Press(Key.LeftAlt, Key.F); // Alt+F to open File menu
+	/// appDriver.Keyboard.Press(Key.LeftCtrl, Key.LeftShift, Key.Tab); // Ctrl+Shift+Tab
 	/// </code>
 	/// </summary>
 	public void Press(params Key[] keys)
 	{
-		// Not the most kosher implementation, sorry Raymond, but it works fine for WPF apps.
-		// Note: `Hotkey` uses `SendInput` because that's the only simple way to send modifier keys.
-		foreach (var key in keys)
-			User32.PostMessage(Process.MainWindowHandle, WindowsMessages.WM_CHAR, (IntPtr) KeyInterop.VirtualKeyFromKey(key), IntPtr.Zero);
+		var heldModifiers = new HashSet<Key>();
 
-		OnAction();
-	}
-
-	/// <summary>
-	/// Sends a physical key press to the active application.
-	/// Prefer using `Press` or `Hotkey`, but `PhysicalPress` can be useful for `MessageBox` scenarios.
-	/// <code>
-	/// ✏️ appDriver.Keyboard.PhysicalPress(Key.Tab, Key.Enter);
-	/// </code>
-	/// </summary>
-	public void PhysicalPress(params Key[] keys)
-	{
 		foreach (var key in keys)
 		{
+			if (IsModifierKey(key))
+			{
+				if (!heldModifiers.Contains(key))
+				{
+					// Press the modifier
+					var modifierCode = (byte) KeyInterop.VirtualKeyFromKey(key);
+					SendInput(modifierCode, true, false, false, false);
+					heldModifiers.Add(key);
+				}
+
+				continue;
+			}
+
 			var code = KeyInterop.VirtualKeyFromKey(key);
 			if (code == -1)
 				throw new ArgumentException($"Invalid key: {key}");
 
-			var low = (byte) (code & 0xff);
+			var virtualKey = (byte) (code & 0xff);
 
-			// Type the effective key
-			SendInput(low, true, false, false, false);
-			SendInput(low, false, false, false, false);
+			// Press and release the regular key
+			SendInput(virtualKey, true, false, false, false);
+			SendInput(virtualKey, false, false, false, false);
+		}
+
+		// Release all held modifiers in reverse order
+		foreach (var modifier in heldModifiers.Reverse())
+		{
+			var modifierCode = (byte) KeyInterop.VirtualKeyFromKey(modifier);
+			SendInput(modifierCode, false, false, false, false);
 		}
 
 		OnAction();
 	}
 
 	/// <summary>
-	/// Triggers a `TextCompositionEventArgs` on the currently focused element. This simulates typing on a keyboard.
+	/// Sends a physical key press to the active application.
+	/// Handles shift state for special characters and capital letters.
 	/// <code>
-	/// ✏️ appDriver.Keyboard.Type("Hello world!");
+	/// appDriver.GetElement(x => x["Name"] == "FileInput").Click();
+	/// appDriver.Keyboard.PhysicalType("C:\code\myfile.txt");
+	/// appDriver.Keyboard.PhysicalPress(Key.Enter);
 	/// </code>
 	/// </summary>
 	public void Type(string text)
 	{
-		Expression<Action<Application>> code = _ => KeyboardInput.Type(text);
-		var response = Channel.GetResponse(new
+		foreach (var key in text)
 		{
-			Kind = nameof(InvokeStaticCommand),
-			Code = Eval.SerializeCode(code),
-		});
+			var virtualKeyCode = User32.VkKeyScan(key);
 
-		OnAction();
-	}
+			// The high byte contains shift state information
+			var shiftState = (byte) ((virtualKeyCode >> 8) & 0xFF);
 
-	/// <summary>
-	/// Sends a key press input to the application. Due to implementation details, this will bring the application to the foreground.<br/>
-	/// If modifier key support is unneeded, consider using `Press` instead.
-	/// <code>
-	/// ✏️ appDriver.Keyboard.Hotkey(ModifierKeys.Control, Key.A);
-	/// </code>
-	/// </summary>
-	public void Hotkey(ModifierKeys modifier, Key key)
-	{
-		var code = KeyInterop.VirtualKeyFromKey(key);
-		if (code == -1)
-			throw new ArgumentException($"Invalid key: {key}");
+			// The low byte contains the virtual key code
+			var vkCode = (byte) (virtualKeyCode & 0xFF);
 
-		var low = (byte) (code & 0xff);
+			var needsShift = false;
 
-		// Check if there are any modifiers
-		var modifiers = new List<VirtualKeyShort>();
+			// Check if shift is needed based on the shift state
+			// Bit 0: Shift key
+			// Bit 1: Ctrl key
+			// Bit 2: Alt key
+			if ((shiftState & 1) != 0)
+			{
+				needsShift = true;
+			}
 
-		if (modifier.HasFlag(ModifierKeys.Shift))
-			modifiers.Add(VirtualKeyShort.SHIFT);
+			// Handle shift key if needed
+			if (needsShift)
+			{
+				// Press shift down
+				SendInput(User32.VK_SHIFT, true, false, false, false);
+			}
 
-		if (modifier.HasFlag(ModifierKeys.Control))
-			modifiers.Add(VirtualKeyShort.CONTROL);
+			// Press and release the actual key
+			SendInput(vkCode, true, false, false, false);
+			SendInput(vkCode, false, false, false, false);
 
-		if (modifier.HasFlag(ModifierKeys.Alt))
-			modifiers.Add(VirtualKeyShort.ALT);
-
-		if (modifier.HasFlag(ModifierKeys.Windows))
-			modifiers.Add(VirtualKeyShort.LWIN);
-
-		// Set the foreground window to the app process, so it receives input.
-		var currentForegroundWindow = User32.GetForegroundWindow();
-		User32.SetForegroundWindow(Process.MainWindowHandle);
-
-		// Press the modifiers
-		foreach (var mod in modifiers)
-			SendInput((ushort) mod, true, false, false, false);
-
-		// Type the effective key
-		SendInput(low, true, false, false, false);
-		SendInput(low, false, false, false, false);
-
-		// Release the modifiers
-		foreach (var mod in Enumerable.Reverse(modifiers))
-			SendInput((ushort) mod, false, false, false, false);
-
-		// Restore the foreground window.
-		User32.SetForegroundWindow(currentForegroundWindow);
+			if (needsShift)
+			{
+				// Release shift
+				SendInput(User32.VK_SHIFT, false, false, false, false);
+			}
+		}
 
 		OnAction();
 	}
@@ -175,7 +158,13 @@ public sealed class Keyboard
 			Log.Info("Failed to send input");
 	}
 
-	private NamedPipeClient Channel { get; }
+	private bool IsModifierKey(Key key)
+	{
+		return key == Key.LeftCtrl || key == Key.RightCtrl ||
+			   key == Key.LeftAlt || key == Key.RightAlt ||
+			   key == Key.LeftShift || key == Key.RightShift ||
+			   key == Key.LWin || key == Key.RWin;
+	}
+
 	private Action OnAction { get; }
-	private Process Process { get; }
 }
