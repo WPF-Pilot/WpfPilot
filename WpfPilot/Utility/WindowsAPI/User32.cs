@@ -1,4 +1,6 @@
-﻿namespace WpfPilot.Utility.WindowsAPI;
+﻿#pragma warning disable SA1310 // Field names should not contain underscore
+
+namespace WpfPilot.Utility.WindowsAPI;
 
 using System;
 using System.Runtime.InteropServices;
@@ -144,6 +146,7 @@ internal static class User32
 	[DllImport("kernel32.dll", SetLastError = true)]
 	public static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress,
 		byte[] lpBuffer, int nSize, out IntPtr lpNumberOfBytesWritten);
+
+	public const byte VK_SHIFT = 0x10;
 }
 #pragma warning restore
-

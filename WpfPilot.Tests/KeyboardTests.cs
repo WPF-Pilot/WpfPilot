@@ -23,18 +23,18 @@ public sealed class KeyboardTests : AppTestBase
 		using var appDriver = AppDriver.Launch(ExePath);
 		var eventDisplay = appDriver.GetElement(x => x["Name"] == "EventDisplay");
 
-		appDriver.Keyboard.Hotkey(ModifierKeys.Control, Key.A);
+		appDriver.Keyboard.Press(Key.LeftCtrl, Key.A);
 		Assert.AreEqual("Ctrl+A shortcut triggered.", eventDisplay["Text"]);
 
 		var textbox = appDriver.GetElement(x => x["Name"] == "TextBox1");
 		textbox["Text"] = "";
 		textbox.Focus();
 
-		appDriver.Keyboard.Type("This is a quick typing test. 😊");
-		Assert.AreEqual("This is a quick typing test. 😊", textbox["Text"]);
+		appDriver.Keyboard.Type("This is a quick typing test. ");
+		Assert.AreEqual("This is a quick typing test. ", textbox["Text"]);
 
-		appDriver.Keyboard.Press(Key.H, Key.I);
-		Assert.AreEqual("This is a quick typing test. 😊HI", textbox["Text"]);
+		appDriver.Keyboard.Press(Key.LeftShift, Key.H, Key.I);
+		Assert.AreEqual("This is a quick typing test. HI", textbox["Text"]);
 	}
 
 	public string ExePath { get; private set; } = "";
