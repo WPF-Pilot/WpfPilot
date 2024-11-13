@@ -84,7 +84,6 @@ Assert.True(playerHUD["PlayerName"].StartsWith("Erik"));
 
 - `Keyboard.Press`
 - `Keyboard.Type`
-- `Keyboard.Hotkey`
 
 ## CI/CD
 
@@ -153,3 +152,4 @@ The WPF Pilot split license is viewable [here](LICENSE.txt). For most consumers 
 - If you cloned the project, and built in debug locally, and `AppDriverPayload` is injected into an exe, you can attach Visual Studio to the process and walk through the `AppDriverPayload` code like usual.
 - `WpfPilot` uses DLL injection to setup a communication bridge. If you have an aggressive anti-virus, you may need to disable it. I have never personally encountered this, but it is worth mentioning.
 - If the app is launched in Administrator mode, and the test suite is not, it may not have permissions to inject.
+- The test suite dotnet version or framework must match the application dotnet version or framework.
