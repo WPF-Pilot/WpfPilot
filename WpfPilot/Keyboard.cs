@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using WpfPilot.Utility;
 using WpfPilot.Utility.WindowsAPI;
@@ -51,6 +52,9 @@ public sealed class Keyboard
 			// Press and release the regular key
 			SendInput(virtualKey, true, false, false, false);
 			SendInput(virtualKey, false, false, false, false);
+
+			// Mechanical typing speed. Gives the application time to handle the inputs.
+			Task.Delay(millisecondsDelay: 50).GetAwaiter().GetResult();
 		}
 
 		// Release all held modifiers in reverse order
@@ -111,6 +115,9 @@ public sealed class Keyboard
 				// Release shift
 				SendInput(User32.VK_SHIFT, false, false, false, false);
 			}
+
+			// Mechanical typing speed. Gives the application time to handle the inputs.
+			Task.Delay(millisecondsDelay: 20).GetAwaiter().GetResult();
 		}
 
 		OnAction();

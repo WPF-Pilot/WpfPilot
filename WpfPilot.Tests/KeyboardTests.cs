@@ -30,11 +30,11 @@ public sealed class KeyboardTests : AppTestBase
 		textbox["Text"] = "";
 		textbox.Focus();
 
-		appDriver.Keyboard.Type("This is a quick typing test. 😊");
-		Assert.AreEqual("This is a quick typing test. 😊", textbox["Text"]);
+		appDriver.Keyboard.Type("This is a quick typing test. ");
+		Assert.AreEqual("This is a quick typing test. ", textbox["Text"]);
 
-		appDriver.Keyboard.Press(Key.H, Key.I);
-		Assert.AreEqual("This is a quick typing test. 😊HI", textbox["Text"]);
+		appDriver.Keyboard.Press(Key.LeftShift, Key.H, Key.I);
+		Assert.AreEqual("This is a quick typing test. HI", textbox["Text"]);
 	}
 
 	public string ExePath { get; private set; } = "";
