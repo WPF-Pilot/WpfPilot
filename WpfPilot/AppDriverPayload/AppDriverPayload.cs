@@ -91,8 +91,7 @@ public static class AppDriverPayload
 				}
 				else if (command.Value.Kind == nameof(GetVisualTreeCommand) || command.Value.Kind == nameof(ScreenshotCommand))
 				{
-					// `GetVisualTree` and `Screenshot` should sooner crash due to timeouts (in `NamedPipeClient`) than return nothing.
-					timeoutMs = 100_000_000;
+					timeoutMs = 5_000;
 				}
 
 				// Check if a dialog was opened with `ShowDialog` or a command timeout occurred and early return if so.
@@ -130,14 +129,14 @@ public static class AppDriverPayload
 				// Lost access to UI thread, so we need to reinject or exit.
 				if (result == UIThreadRunResult.Unable)
 				{
-					Log.Info("Lost access to UI thread. Closing command loop.");
 					channel.Dispose();
 					return;
 				}
 
-				var isHangCommand = command.Value.Kind != nameof(GetVisualTreeCommand) && command.Value.Kind != nameof(ScreenshotCommand);
-				if (result == UIThreadRunResult.Pending && !command.CheckHasResponded() && isHangCommand)
-					command.Respond(new { Value = "UnserializableResult" });
+				if (result == UIThreadRunResult.Pending && !command.CheckHasResponded())
+				{
+					command.Respond(new { Value = "PendingResult" });
+				}
 
 				// Even though ranOnUIThread has returned, there may still be async work to do, since it will return when the first await is hit, NOT when the async work is done.
 				// We are only finished when `command.CheckHasResponded()` is true.
