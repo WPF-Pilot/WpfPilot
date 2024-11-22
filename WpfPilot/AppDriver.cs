@@ -660,12 +660,17 @@ public sealed class AppDriver : IDisposable
 		if (AppProcess.Process.HasExited)
 			return;
 
-		List<Node>? nodes = Channel.GetResponse(new
+		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(GetVisualTreeCommand),
 			PropNames,
 		}, returnOnCleanExit: true);
 
+		// A dialog window is probably open.
+		if (PropInfo.GetPropertyValue(response, "Value") == "PendingResult")
+			return;
+
+		List<Node>? nodes = response;
 		if (nodes != null)
 			RefreshVisualTree(nodes);
 	}
