@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -255,6 +256,28 @@ public class Element
 	}
 
 	/***************** non-async versions of `Invoke`. *****************/
+
+	/// <summary>
+	/// Executes the given expression on the underlying control and returns the result.
+	/// <code>
+	/// ✏️ myCustomControl.Invoke&lt;CustomControl, FormResult&gt;(x => x.ResetForm());
+	/// ✏️ calendar.Invoke&lt;Calendar, DayOfWeek&gt;(x => x.FirstDayOfWeek);
+	/// </code>
+	/// </summary>
+	/// <typeparam name="TInput">The type of the underlying control. E.G. Button, MenuItem, CheckBox, or a custom control.</typeparam>
+	/// <typeparam name="TOutput">The result type of the expression call.</typeparam>
+	/// <param name="code">The expression to run on the control.</param>
+	/// <returns>The result of the expression call.</returns>
+	/// <exception cref="SerializationException">
+	/// The result was not JSON serializable over the wire. In this case, consider returning a subset of the object, instead of the entire object.
+	/// E.G.
+	/// myCustomForm.Invoke&lt;CustomForm, FormViewModel&gt;(x => x.ViewModel) becomes
+	/// myCustomForm.Invoke&lt;CustomForm, bool&gt;(x => x.ViewModel.HasSubmitted)
+	/// Another option is not returning the result by calling the non-return version of Invoke.
+	/// </exception>
+	/// <exception cref="TimeoutException">
+	/// The Invoke expression ran for too long and was cut short.
+	/// </exception>
 	public TOutput Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code)
 	{
 		var response = Channel.GetResponse(new
@@ -264,17 +287,42 @@ public class Element
 			Code = Eval.SerializeCode(code),
 		});
 
-		TOutput? result;
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s && s == "UnserializableResult")
-			result = default;
-		else
-			result = (TOutput) responseValue;
+		if (responseValue is string s)
+		{
+			if (s == "UnserializableResult")
+				throw new SerializationException($"{nameof(Invoke)} result is not serializable.");
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(Invoke)} timeout.");
+		}
+
+		var result = (TOutput) responseValue;
 
 		OnAction();
 		return result!;
 	}
 
+	/// <summary>
+	/// Executes the given expression on the underlying control and returns the result.
+	/// <code>
+	/// ✏️ myCustomControl.Invoke&lt;CustomControl, FormResult&gt;(x => x.ResetForm(), out var resetFormResult);
+	/// ✏️ calendar.Invoke&lt;Calendar, DayOfWeek&gt;(x => x.FirstDayOfWeek, out var firstDayOfWeek);
+	/// </code>
+	/// </summary>
+	/// <typeparam name="TInput">The type of the underlying control. E.G. Button, MenuItem, CheckBox, or a custom control.</typeparam>
+	/// <typeparam name="TOutput">The result type of the expression call.</typeparam>
+	/// <param name="code">The expression to run on the control.</param>
+	/// <returns>The element so additional methods can be chained and the result of the expression call in the out variable.</returns>
+	/// <exception cref="SerializationException">
+	/// The result was not JSON serializable over the wire. In this case, consider returning a subset of the object, instead of the entire object.
+	/// E.G.
+	/// myCustomForm.Invoke&lt;CustomForm, FormViewModel&gt;(x => x.ViewModel) becomes
+	/// myCustomForm.Invoke&lt;CustomForm, bool&gt;(x => x.ViewModel.HasSubmitted)
+	/// Another option is not returning the result by calling the non-return version of Invoke.
+	/// </exception>
+	/// <exception cref="TimeoutException">
+	/// The Invoke expression ran for too long and was cut short.
+	/// </exception>
 	public virtual Element Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code, out TOutput? result)
 	{
 		var response = Channel.GetResponse(new
@@ -285,15 +333,31 @@ public class Element
 		});
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s && s == "UnserializableResult")
-			result = default;
-		else
-			result = (TOutput) responseValue;
+		if (responseValue is string s)
+		{
+			if (s == "UnserializableResult")
+				throw new SerializationException($"Unserializable {nameof(Invoke)} result received.");
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(Invoke)} timeout.");
+		}
+
+		result = (TOutput) responseValue;
 
 		OnAction();
 		return this;
 	}
 
+	/// <summary>
+	/// Executes the given expression on the underlying control.
+	/// <code>
+	/// ✏️ calendar.Invoke(x => x.ReleaseAllTouchCaptures());
+	/// </code>
+	/// </summary>
+	/// <param name="code">The expression to run on the control.</param>
+	/// <returns>The element so additional methods can be chained.</returns>
+	/// <exception cref="TimeoutException">
+	/// The Invoke expression ran for too long and was cut short.
+	/// </exception>
 	public virtual Element Invoke(Expression<Action<UIElement>> code)
 	{
 		var response = Channel.GetResponse(new
@@ -303,10 +367,28 @@ public class Element
 			Code = Eval.SerializeCode(code),
 		});
 
+		var responseValue = PropInfo.GetPropertyValue(response, "Value");
+		if (responseValue is string s)
+		{
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(Invoke)} timeout.");
+		}
+
 		OnAction();
 		return this;
 	}
 
+	/// <summary>
+	/// Executes the given expression on the underlying control.
+	/// <code>
+	/// ✏️ calendar.Invoke&lt;Calendar&gt;(x => x.ResetCalendar());
+	/// </code>
+	/// </summary>
+	/// <param name="code">The expression to run on the control.</param>
+	/// <returns>The element so additional methods can be chained.</returns>
+	/// <exception cref="TimeoutException">
+	/// The Invoke expression ran for too long and was cut short.
+	/// </exception>
 	public virtual Element Invoke<TInput>(Expression<Action<TInput>> code)
 	{
 		var response = Channel.GetResponse(new
@@ -316,11 +398,41 @@ public class Element
 			Code = Eval.SerializeCode(code),
 		});
 
+		var responseValue = PropInfo.GetPropertyValue(response, "Value");
+		if (responseValue is string s)
+		{
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(Invoke)} timeout.");
+		}
+
 		OnAction();
 		return this;
 	}
 
 	/***************** async versions of `Invoke`. *****************/
+
+	/// <summary>
+	/// Executes the given async expression on the underlying control and returns the result.<br/>
+	/// `await` should not be used in the expression, this is handled by WPF Pilot.
+	/// <code>
+	/// ✏️ myCustomControl.InvokeAsync&lt;CustomControl, FormResult&gt;(x => x.ResetFormAsync());
+	/// ✏️ calendar.InvokeAsync&lt;Calendar, DayOfWeek&gt;(x => x.GetCurrentHolidayAsync());
+	/// </code>
+	/// </summary>
+	/// <typeparam name="TInput">The type of the underlying control. E.G. Button, MenuItem, CheckBox, or a custom control.</typeparam>
+	/// <typeparam name="TOutput">The result type of the expression call.</typeparam>
+	/// <param name="code">The expression to run on the control.</param>
+	/// <returns>The result of the expression call.</returns>
+	/// <exception cref="SerializationException">
+	/// The result was not JSON serializable over the wire. In this case, consider returning a subset of the object, instead of the entire object.
+	/// E.G.
+	/// myCustomForm.InvokeAsync&lt;CustomForm, FormViewModel&gt;(x => x.GetViewModelAsync()) becomes
+	/// myCustomForm.Invoke&lt;CustomForm, bool&gt;(x => x.GetHasSeenHolidayNewsAsync())
+	/// Another option is not returning the result by calling the non-return version of InvokeAsync.
+	/// </exception>
+	/// <exception cref="TimeoutException">
+	/// The InvokeAsync expression ran for too long and was cut short.
+	/// </exception>
 	public TOutput InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code)
 	{
 		var response = Channel.GetResponse(new
@@ -330,17 +442,43 @@ public class Element
 			Code = Eval.SerializeCode(code),
 		});
 
-		TOutput? result;
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s && s == "UnserializableResult")
-			result = default;
-		else
-			result = (TOutput) responseValue;
+		if (responseValue is string s)
+		{
+			if (s == "UnserializableResult")
+				throw new SerializationException($"Unserializable {nameof(InvokeAsync)} result received.");
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(InvokeAsync)} timeout.");
+		}
+
+		var result = (TOutput) responseValue;
 
 		OnAction();
 		return result!;
 	}
 
+	/// <summary>
+	/// Executes the given async expression on the underlying control and returns the result.<br/>
+	/// `await` should not be used in the code expression, this is handled by WPF Pilot.
+	/// <code>
+	/// ✏️ myCustomControl.InvokeAsync&lt;CustomControl, FormResult&gt;(x => x.ResetFormAsync());
+	/// ✏️ calendar.InvokeAsync&lt;Calendar, DayOfWeek&gt;(x => x.GetCurrentHolidayAsync());
+	/// </code>
+	/// </summary>
+	/// <typeparam name="TInput">The type of the underlying control. E.G. Button, MenuItem, CheckBox, or a custom control.</typeparam>
+	/// <typeparam name="TOutput">The result type of the expression call.</typeparam>
+	/// <param name="code">The expression to run on the control.</param>
+	/// <returns>The element so additional methods can be chained and the result of the expression call in the out variable.</returns>
+	/// <exception cref="SerializationException">
+	/// The result was not JSON serializable over the wire. In this case, consider returning a subset of the object, instead of the entire object.
+	/// E.G.
+	/// myCustomForm.InvokeAsync&lt;CustomForm, FormViewModel&gt;(x => x.GetViewModelAsync(), out var viewModel) becomes
+	/// myCustomForm.Invoke&lt;CustomForm, bool&gt;(x => x.GetHasSeenHolidayNewsAsync(), out var hasSeenHolidayNews)
+	/// Another option is not returning the result by calling the non-return version of InvokeAsync.
+	/// </exception>
+	/// <exception cref="TimeoutException">
+	/// The InvokeAsync expression ran for too long and was cut short.
+	/// </exception>
 	public virtual Element InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code, out TOutput? result)
 	{
 		var response = Channel.GetResponse(new
@@ -351,15 +489,32 @@ public class Element
 		});
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s && s == "UnserializableResult")
-			result = default;
-		else
-			result = (TOutput) responseValue;
+		if (responseValue is string s)
+		{
+			if (s == "UnserializableResult")
+				throw new SerializationException($"Unserializable {nameof(InvokeAsync)} result received.");
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(InvokeAsync)} timeout.");
+		}
+
+		result = (TOutput) responseValue;
 
 		OnAction();
 		return this;
 	}
 
+	/// <summary>
+	/// Executes the given async expression on the underlying control.<br/>
+	/// `await` should not be used in the expression, this is handled by WPF Pilot.
+	/// <code>
+	/// ✏️ calendar.Invoke(x => x.ReleaseAllTouchCapturesAsync());
+	/// </code>
+	/// </summary>
+	/// <param name="code">The expression to run on the control.</param>
+	/// <returns>The element so additional methods can be chained.</returns>
+	/// <exception cref="TimeoutException">
+	/// The InvokeAsync expression ran for too long and was cut short.
+	/// </exception>
 	public virtual Element InvokeAsync(Expression<Func<UIElement, Task>> code)
 	{
 		var response = Channel.GetResponse(new
@@ -369,10 +524,29 @@ public class Element
 			Code = Eval.SerializeCode(code),
 		});
 
+		var responseValue = PropInfo.GetPropertyValue(response, "Value");
+		if (responseValue is string s)
+		{
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(InvokeAsync)} timeout.");
+		}
+
 		OnAction();
 		return this;
 	}
 
+	/// <summary>
+	/// Executes the given async expression on the underlying control.<br/>
+	/// `await` should not be used in the expression, this is handled by WPF Pilot.
+	/// <code>
+	/// ✏️ calendar.Invoke&lt;Calendar&gt;(x => x.ResetCalendarAsync());
+	/// </code>
+	/// </summary>
+	/// <param name="code">The expression to run on the control.</param>
+	/// <returns>The element so additional methods can be chained.</returns>
+	/// <exception cref="TimeoutException">
+	/// The InvokeAsync expression ran for too long and was cut short.
+	/// </exception>
 	public virtual Element InvokeAsync<TInput>(Expression<Func<TInput, Task>> code)
 	{
 		var response = Channel.GetResponse(new
@@ -381,6 +555,13 @@ public class Element
 			TargetId,
 			Code = Eval.SerializeCode(code),
 		});
+
+		var responseValue = PropInfo.GetPropertyValue(response, "Value");
+		if (responseValue is string s)
+		{
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(InvokeAsync)} timeout.");
+		}
 
 		OnAction();
 		return this;
