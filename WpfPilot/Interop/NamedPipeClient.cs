@@ -35,7 +35,7 @@ internal sealed class NamedPipeClient : IDisposable
 		Pipe.Dispose();
 	}
 
-	public dynamic? GetResponse(object command, bool returnOnCleanExit = false)
+	public dynamic? GetResponse(object command, int timeoutMs = 10_000, bool returnOnCleanExit = false)
 	{
 		_ = command ?? throw new ArgumentNullException(nameof(command));
 
@@ -91,7 +91,7 @@ internal sealed class NamedPipeClient : IDisposable
 				return;
 
 			var reader = new StreamReader(Pipe);
-			rawMessage = TimeoutAfter<string?>(reader.ReadLineAsync(), TimeSpan.FromSeconds(10))
+			rawMessage = TimeoutAfter<string?>(reader.ReadLineAsync(), TimeSpan.FromMilliseconds(timeoutMs + 1_000))
 				.ConfigureAwait(false)
 				.GetAwaiter()
 				.GetResult();

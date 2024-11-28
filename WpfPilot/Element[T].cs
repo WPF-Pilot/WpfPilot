@@ -4,6 +4,7 @@ namespace WpfPilot;
 
 using System;
 using System.Linq.Expressions;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using System.Windows;
 using WpfPilot.AppDriverPayload.Commands;
@@ -80,55 +81,73 @@ public class Element<T> : Element
 	public override T RaiseEvent<TInput>(Expression<Func<TInput, RoutedEventArgs>> code) =>
 		(T) base.RaiseEvent<TInput>(code);
 
-	public new T Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code, out TOutput? result)
+	/// <inheritdoc />
+	public new T Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code, out TOutput? result, int timeoutMs = 10_000)
 	{
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
-		});
+			TimeoutMs = timeoutMs
+		}, timeoutMs);
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s && s == "UnserializableResult")
-			result = default;
-		else
-			result = (TOutput) responseValue;
+		if (responseValue is string s)
+		{
+			if (s == "UnserializableResult")
+				throw new SerializationException($"{nameof(Invoke)} result is not serializable.");
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(Invoke)} timeout.");
+		}
+
+		result = responseValue;
 
 		OnAction();
 		return (T) this;
 	}
 
-	public override T Invoke(Expression<Action<UIElement>> code) =>
-		(T) base.Invoke(code);
+	/// <inheritdoc />
+	public override T Invoke(Expression<Action<UIElement>> code, int timeoutMs = 10_000) =>
+		(T) base.Invoke(code, timeoutMs);
 
-	public override T Invoke<TInput>(Expression<Action<TInput>> code) =>
-		(T) base.Invoke(code);
+	/// <inheritdoc />
+	public override T Invoke<TInput>(Expression<Action<TInput>> code, int timeoutMs = 10_000) =>
+		(T) base.Invoke(code, timeoutMs);
 
-	public new T InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code, out TOutput? result)
+	/// <inheritdoc />
+	public new T InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code, out TOutput result, int timeoutMs = 10_000)
 	{
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
-		});
+			TimeoutMs = timeoutMs
+		}, timeoutMs);
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s && s == "UnserializableResult")
-			result = default;
-		else
-			result = (TOutput) responseValue;
+		if (responseValue is string s)
+		{
+			if (s == "UnserializableResult")
+				throw new SerializationException($"{nameof(Invoke)} result is not serializable.");
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(Invoke)} timeout.");
+		}
+
+		result = (TOutput) responseValue;
 
 		OnAction();
 		return (T) this;
 	}
 
-	public override T InvokeAsync(Expression<Func<UIElement, Task>> code) =>
-		(T) base.InvokeAsync(code);
+	/// <inheritdoc />
+	public override T InvokeAsync(Expression<Func<UIElement, Task>> code, int timeoutMs = 10_000) =>
+		(T) base.InvokeAsync(code, timeoutMs);
 
-	public override T InvokeAsync<TInput>(Expression<Func<TInput, Task>> code) =>
-		(T) base.InvokeAsync(code);
+	/// <inheritdoc />
+	public override T InvokeAsync<TInput>(Expression<Func<TInput, Task>> code, int timeoutMs = 10_000) =>
+		(T) base.InvokeAsync(code, timeoutMs);
 
 	/// <inheritdoc />
 	public override T Assert(Expression<Func<Element, bool?>> predicateExpression, int timeoutMs = 10_000) =>

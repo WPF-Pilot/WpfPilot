@@ -267,6 +267,7 @@ public class Element
 	/// <typeparam name="TInput">The type of the underlying control. E.G. Button, MenuItem, CheckBox, or a custom control.</typeparam>
 	/// <typeparam name="TOutput">The result type of the expression call.</typeparam>
 	/// <param name="code">The expression to run on the control.</param>
+	/// <param name="timeoutMs">The maximum amount of time to give the expression to execute.</param>
 	/// <returns>The result of the expression call.</returns>
 	/// <exception cref="SerializationException">
 	/// The result was not JSON serializable over the wire. In this case, consider returning a subset of the object, instead of the entire object.
@@ -278,14 +279,15 @@ public class Element
 	/// <exception cref="TimeoutException">
 	/// The Invoke expression ran for too long and was cut short.
 	/// </exception>
-	public TOutput Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code)
+	public TOutput Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code, int timeoutMs = 10_000)
 	{
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
-		});
+			TimeoutMs = timeoutMs
+		}, timeoutMs: timeoutMs);
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
 		if (responseValue is string s)
@@ -313,6 +315,7 @@ public class Element
 	/// <typeparam name="TOutput">The result type of the expression call.</typeparam>
 	/// <param name="code">The expression to run on the control.</param>
 	/// <param name="result">The output variable that holds the result of the expression call.</param>
+	/// <param name="timeoutMs">The maximum amount of time to give the expression to execute.</param>
 	/// <returns>The element so additional methods can be chained and the result of the expression call in the out variable.</returns>
 	/// <exception cref="SerializationException">
 	/// The result was not JSON serializable over the wire. In this case, consider returning a subset of the object, instead of the entire object.
@@ -324,14 +327,15 @@ public class Element
 	/// <exception cref="TimeoutException">
 	/// The Invoke expression ran for too long and was cut short.
 	/// </exception>
-	public virtual Element Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code, out TOutput? result)
+	public virtual Element Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code, out TOutput result, int timeoutMs = 10_000)
 	{
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
-		});
+			TimeoutMs = timeoutMs,
+		}, timeoutMs: timeoutMs);
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
 		if (responseValue is string s)
@@ -355,18 +359,20 @@ public class Element
 	/// </code>
 	/// </summary>
 	/// <param name="code">The expression to run on the control.</param>
+	/// <param name="timeoutMs">The maximum amount of time to give the expression to execute.</param>
 	/// <returns>The element so additional methods can be chained.</returns>
 	/// <exception cref="TimeoutException">
 	/// The Invoke expression ran for too long and was cut short.
 	/// </exception>
-	public virtual Element Invoke(Expression<Action<UIElement>> code)
+	public virtual Element Invoke(Expression<Action<UIElement>> code, int timeoutMs = 10_000)
 	{
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
-		});
+			TimeoutMs = timeoutMs,
+		}, timeoutMs: timeoutMs);
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
 		if (responseValue is string s)
@@ -386,18 +392,20 @@ public class Element
 	/// </code>
 	/// </summary>
 	/// <param name="code">The expression to run on the control.</param>
+	/// <param name="timeoutMs">The maximum amount of time to give the expression to execute.</param>
 	/// <returns>The element so additional methods can be chained.</returns>
 	/// <exception cref="TimeoutException">
 	/// The Invoke expression ran for too long and was cut short.
 	/// </exception>
-	public virtual Element Invoke<TInput>(Expression<Action<TInput>> code)
+	public virtual Element Invoke<TInput>(Expression<Action<TInput>> code, int timeoutMs = 10_000)
 	{
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
-		});
+			TimeoutMs = timeoutMs,
+		}, timeoutMs: timeoutMs);
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
 		if (responseValue is string s)
@@ -423,6 +431,7 @@ public class Element
 	/// <typeparam name="TInput">The type of the underlying control. E.G. Button, MenuItem, CheckBox, or a custom control.</typeparam>
 	/// <typeparam name="TOutput">The result type of the expression call.</typeparam>
 	/// <param name="code">The expression to run on the control.</param>
+	/// <param name="timeoutMs">The maximum amount of time to give the expression to execute.</param>
 	/// <returns>The result of the expression call.</returns>
 	/// <exception cref="SerializationException">
 	/// The result was not JSON serializable over the wire. In this case, consider returning a subset of the object, instead of the entire object.
@@ -434,14 +443,15 @@ public class Element
 	/// <exception cref="TimeoutException">
 	/// The InvokeAsync expression ran for too long and was cut short.
 	/// </exception>
-	public TOutput InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code)
+	public TOutput InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code, int timeoutMs = 10_000)
 	{
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
-		});
+			TimeoutMs = timeoutMs,
+		}, timeoutMs: timeoutMs);
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
 		if (responseValue is string s)
@@ -470,6 +480,7 @@ public class Element
 	/// <typeparam name="TOutput">The result type of the expression call.</typeparam>
 	/// <param name="code">The expression to run on the control.</param>
 	/// <param name="result">The output variable that holds the result of the expression call.</param>
+	/// <param name="timeoutMs">The maximum amount of time to give the expression to execute.</param>
 	/// <returns>The element so additional methods can be chained and the result of the expression call in the out variable.</returns>
 	/// <exception cref="SerializationException">
 	/// The result was not JSON serializable over the wire. In this case, consider returning a subset of the object, instead of the entire object.
@@ -481,14 +492,15 @@ public class Element
 	/// <exception cref="TimeoutException">
 	/// The InvokeAsync expression ran for too long and was cut short.
 	/// </exception>
-	public virtual Element InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code, out TOutput? result)
+	public virtual Element InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code, out TOutput result, int timeoutMs = 10_000)
 	{
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
-		});
+			TimeoutMs = timeoutMs,
+		}, timeoutMs: timeoutMs);
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
 		if (responseValue is string s)
@@ -513,18 +525,20 @@ public class Element
 	/// </code>
 	/// </summary>
 	/// <param name="code">The expression to run on the control.</param>
+	/// <param name="timeoutMs">The maximum amount of time to give the expression to execute.</param>
 	/// <returns>The element so additional methods can be chained.</returns>
 	/// <exception cref="TimeoutException">
 	/// The InvokeAsync expression ran for too long and was cut short.
 	/// </exception>
-	public virtual Element InvokeAsync(Expression<Func<UIElement, Task>> code)
+	public virtual Element InvokeAsync(Expression<Func<UIElement, Task>> code, int timeoutMs = 10_000)
 	{
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
-		});
+			TimeoutMs = timeoutMs,
+		}, timeoutMs: timeoutMs);
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
 		if (responseValue is string s)
@@ -545,18 +559,20 @@ public class Element
 	/// </code>
 	/// </summary>
 	/// <param name="code">The expression to run on the control.</param>
+	/// <param name="timeoutMs">The maximum amount of time to give the expression to execute.</param>
 	/// <returns>The element so additional methods can be chained.</returns>
 	/// <exception cref="TimeoutException">
 	/// The InvokeAsync expression ran for too long and was cut short.
 	/// </exception>
-	public virtual Element InvokeAsync<TInput>(Expression<Func<TInput, Task>> code)
+	public virtual Element InvokeAsync<TInput>(Expression<Func<TInput, Task>> code, int timeoutMs = 10_000)
 	{
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
-		});
+			TimeoutMs = timeoutMs,
+		}, timeoutMs: timeoutMs);
 
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
 		if (responseValue is string s)

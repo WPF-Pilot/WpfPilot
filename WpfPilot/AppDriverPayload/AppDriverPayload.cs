@@ -77,19 +77,8 @@ public static class AppDriverPayload
 				var cts = new CancellationTokenSource();
 
 				// Calculate appropriate timeout for the command.
-				var timeoutMs = 1_000;
-
-				// Give `Invoke` and `InvokeStatic` more time to return, if they return a result.
-				if (command.Value.Kind == nameof(InvokeStaticCommand) || command.Value.Kind == nameof(InvokeCommand))
-				{
-					var code = PropInfo.GetPropertyValue(command.Value, "Code");
-					if (code != null)
-					{
-						if (ArgsMapper.MapSingle(code) is Delegate func && func.Method.ReturnType != typeof(void) && func.Method.ReturnType != typeof(Task))
-							timeoutMs = 9_000;
-					}
-				}
-				else if (command.Value.Kind == nameof(GetVisualTreeCommand) || command.Value.Kind == nameof(ScreenshotCommand))
+				var timeoutMs = PropInfo.GetPropertyValue(command.Value, "TimeoutMs") is int timeout ? timeout : 1_000;
+				if (command.Value.Kind == nameof(GetVisualTreeCommand) || command.Value.Kind == nameof(ScreenshotCommand))
 				{
 					timeoutMs = 5_000;
 				}
