@@ -15,11 +15,16 @@ internal static class InvokeStaticCommand
 
 		var func = (Delegate) ArgsMapper.MapSingle(code);
 
-		object? result;
+		object? result = null;
 		if (func.Method.ReturnType.IsSubclassOf(typeof(Task)))
 		{
 			dynamic task = func.DynamicInvoke(Application.Current)!;
 			result = await task;
+		}
+		else if (func.Method.ReturnType == typeof(Task))
+		{
+			dynamic task = func.DynamicInvoke(Application.Current)!;
+			await task;
 		}
 		else
 		{
