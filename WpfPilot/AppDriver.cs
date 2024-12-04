@@ -51,6 +51,7 @@ public sealed class AppDriver : IDisposable
 			});
 		Keyboard = new Keyboard(OnAction);
 		TargetIdToElement = new Dictionary<string, List<Element>>(capacity: 1_000); // Start with a decent capacity.
+		IsElementCacheValid = false;
 
 		// This is the default set of properties we retrieve, however devs can add more properties to this set.
 		PropNames = PropNameDefaults.Value;
@@ -177,10 +178,13 @@ public sealed class AppDriver : IDisposable
 
 		// Check cache first. This can mitigate slowness in situations where the dev has put a matcher in a tight loop.
 		// There should be no cache staleness as the cache is invalidated whenever an action is taken, and we default to refreshing below.
-		foreach (var element in TargetIdToElement.Values.ToArray())
+		if (IsElementCacheValid)
 		{
-			if (matcher(element[0]) == true)
-				return element[0];
+			foreach (var element in TargetIdToElement.Values.ToArray())
+			{
+				if (matcher(element[0]) == true)
+					return element[0];
+			}
 		}
 
 		// Simple backoff to avoid hammering the UI thread.
@@ -216,10 +220,13 @@ public sealed class AppDriver : IDisposable
 
 		// Check cache first. This can mitigate slowness in situations where the dev has put a matcher in a tight loop.
 		// There should be no cache staleness as the cache is invalidated whenever an action is taken, and we default to refreshing below.
-		foreach (var element in TargetIdToElement.Values.ToArray())
+		if (IsElementCacheValid)
 		{
-			if (matcher(element[0]) == true)
-				return (T) Activator.CreateInstance(typeof(T), element[0])!;
+			foreach (var element in TargetIdToElement.Values.ToArray())
+			{
+				if (matcher(element[0]) == true)
+					return (T) Activator.CreateInstance(typeof(T), element[0])!;
+			}
 		}
 
 		// Simple backoff to avoid hammering the UI thread.
@@ -253,6 +260,7 @@ public sealed class AppDriver : IDisposable
 
 		// Check cache first. This can mitigate slowness in situations where the dev has put a matcher in a tight loop.
 		// There should be no cache staleness as the cache is invalidated whenever an action is taken, and we default to refreshing below.
+		if (IsElementCacheValid)
 		{
 			var elements = new List<Element>();
 			foreach (var element in TargetIdToElement.Values.ToArray())
@@ -298,6 +306,7 @@ public sealed class AppDriver : IDisposable
 
 		// Check cache first. This can mitigate slowness in situations where the dev has put a matcher in a tight loop.
 		// There should be no cache staleness as the cache is invalidated whenever an action is taken, and we default to refreshing below.
+		if (IsElementCacheValid)
 		{
 			var elements = new List<T>();
 			foreach (var element in TargetIdToElement.Values.ToArray())
@@ -604,6 +613,7 @@ public sealed class AppDriver : IDisposable
 
 		// Refresh any tracked elements and return the matched element.
 		RefreshVisualTree(nodes);
+		IsElementCacheValid = true;
 
 		Element? match = null;
 		foreach (var element in TargetIdToElement.Values.ToArray())
@@ -625,6 +635,7 @@ public sealed class AppDriver : IDisposable
 
 		// Refresh any tracked elements and return the matched elements.
 		RefreshVisualTree(nodes);
+		IsElementCacheValid = true;
 
 		var matches = new List<Element>();
 		foreach (var element in TargetIdToElement.Values.ToArray())
@@ -638,12 +649,12 @@ public sealed class AppDriver : IDisposable
 
 	private void OnAccessProperty(string propName)
 	{
-		// PropName is already in the set of properties we're tracking.
-		if (PropNames.Contains(propName))
+		if (IsElementCacheValid && PropNames.Contains(propName))
 			return;
 
 		// Add the property to the set of properties we're tracking and refresh the visual tree.
-		PropNames.Add(propName);
+		if (!PropNames.Contains(propName))
+			PropNames.Add(propName);
 
 		List<Node> nodes = Channel.GetResponse(new
 		{
@@ -652,27 +663,12 @@ public sealed class AppDriver : IDisposable
 		})!;
 
 		RefreshVisualTree(nodes);
+		IsElementCacheValid = true;
 	}
 
 	private void OnAction()
 	{
-		// No-op if app has exited, otherwise this method would incorrectly throw.
-		if (AppProcess.Process.HasExited)
-			return;
-
-		var response = Channel.GetResponse(new
-		{
-			Kind = nameof(GetVisualTreeCommand),
-			PropNames,
-		}, returnOnCleanExit: true);
-
-		// A dialog window is probably open.
-		if (PropInfo.GetPropertyValue(response, "Value") == "PendingResult")
-			return;
-
-		List<Node>? nodes = response;
-		if (nodes != null)
-			RefreshVisualTree(nodes);
+		IsElementCacheValid = false;
 	}
 
 	private void RefreshVisualTree(List<Node> nodes)
@@ -721,5 +717,6 @@ public sealed class AppDriver : IDisposable
 	private NamedPipeClient Channel { get; }
 	private HashSet<string> PropNames { get; }
 	private Dictionary<string, List<Element>> TargetIdToElement { get; }
+	private bool IsElementCacheValid { get; set; }
 	private static IDisposable? RecordingTask { get; set; }
 }
