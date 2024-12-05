@@ -1,6 +1,5 @@
 ﻿namespace WpfPilot.Tests;
 
-using System;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -8,7 +7,6 @@ using NUnit.Framework;
 using WpfPilot;
 using WpfPilot.Tests.Elements;
 using WpfPilot.Tests.TestUtility;
-using WpfPilot.Utility;
 
 [TestFixture]
 public sealed class ElementTests : AppTestBase

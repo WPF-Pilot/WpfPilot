@@ -192,7 +192,7 @@ public sealed class AppDriver : IDisposable
 		var delayMsByTryCount = new int[] { 25, 100, 500, 1000, 2000 };
 		while (Environment.TickCount - start < timeoutMs)
 		{
-			var element = DoGetElement(matcher);
+			var element = DoGetElement(matcher, timeoutMs);
 			if (element is not null)
 				return element;
 
@@ -234,7 +234,7 @@ public sealed class AppDriver : IDisposable
 		var delayMsByTryCount = new int[] { 25, 100, 500, 1000, 2000 };
 		while (Environment.TickCount - start < timeoutMs)
 		{
-			var element = DoGetElement(matcher);
+			var element = DoGetElement(matcher, timeoutMs);
 			if (element is not null)
 				return (T) Activator.CreateInstance(typeof(T), element)!;
 
@@ -278,7 +278,7 @@ public sealed class AppDriver : IDisposable
 		var delayMsByTryCount = new int[] { 25, 100, 500, 1000, 2000 };
 		while (Environment.TickCount - start < timeoutMs)
 		{
-			var elements = DoGetElements(matcher);
+			var elements = DoGetElements(matcher, timeoutMs);
 			if (elements.Count != 0)
 				return elements;
 
@@ -324,7 +324,7 @@ public sealed class AppDriver : IDisposable
 		var delayMsByTryCount = new int[] { 25, 100, 500, 1000, 2000 };
 		while (Environment.TickCount - start < timeoutMs)
 		{
-			var elements = DoGetElements(matcher);
+			var elements = DoGetElements(matcher, timeoutMs);
 			if (elements.Count != 0)
 				return elements.Select(x => (T) Activator.CreateInstance(typeof(T), x)!).ToList();
 
@@ -603,13 +603,23 @@ public sealed class AppDriver : IDisposable
 		OnAction();
 	}
 
-	private Element? DoGetElement(Func<Element, bool?> matcher)
+	private Element? DoGetElement(Func<Element, bool?> matcher, int timeoutMs)
 	{
-		List<Node> nodes = Channel.GetResponse(new
+		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(GetVisualTreeCommand),
 			PropNames,
-		})!;
+			TimeoutMs = timeoutMs,
+		}, timeoutMs)!;
+
+		var responseValue = PropInfo.GetPropertyValue(response, "Value");
+		if (responseValue is string s)
+		{
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(GetElement)} timeout.");
+		}
+
+		List<Node> nodes = response;
 
 		// Refresh any tracked elements and return the matched element.
 		RefreshVisualTree(nodes);
@@ -625,13 +635,23 @@ public sealed class AppDriver : IDisposable
 		return match;
 	}
 
-	private IReadOnlyList<Element> DoGetElements(Func<Element, bool?> matcher)
+	private IReadOnlyList<Element> DoGetElements(Func<Element, bool?> matcher, int timeoutMs)
 	{
-		List<Node> nodes = Channel.GetResponse(new
+		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(GetVisualTreeCommand),
 			PropNames,
-		})!;
+			TimeoutMs = timeoutMs,
+		}, timeoutMs)!;
+
+		var responseValue = PropInfo.GetPropertyValue(response, "Value");
+		if (responseValue is string s)
+		{
+			if (s == "PendingResult")
+				throw new TimeoutException($"{nameof(GetElements)} timeout.");
+		}
+
+		List<Node> nodes = response;
 
 		// Refresh any tracked elements and return the matched elements.
 		RefreshVisualTree(nodes);
