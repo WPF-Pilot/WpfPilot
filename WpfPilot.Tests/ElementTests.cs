@@ -1,14 +1,13 @@
 ﻿namespace WpfPilot.Tests;
 
-using System;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using NUnit.Framework;
 using WpfPilot;
+using WpfPilot.ExampleApp;
 using WpfPilot.Tests.Elements;
 using WpfPilot.Tests.TestUtility;
-using WpfPilot.Utility;
 
 [TestFixture]
 public sealed class ElementTests : AppTestBase
@@ -133,14 +132,14 @@ public sealed class ElementTests : AppTestBase
 	public void TestShutdown()
 	{
 		using var appDriver = AppDriver.Launch(ExePath);
-		Assert.DoesNotThrow(() => appDriver.RunCode(app => app.Shutdown(0)));
+		Assert.DoesNotThrow(() => appDriver.GetElement(x => x.TypeName == nameof(App)).Invoke<App>(app => app.Shutdown(0)));
 	}
 
 	[Test]
 	public void TestUserClose()
 	{
 		using var appDriver = AppDriver.Launch(ExePath);
-		Assert.DoesNotThrow(() => appDriver.RunCode(app => app.MainWindow.Close()));
+		Assert.DoesNotThrow(() => appDriver.GetElement(x => x.TypeName == nameof(App)).Invoke<App>(app => app.MainWindow.Close()));
 	}
 
 	private string ExePath { get; set; } = "";

@@ -6,7 +6,7 @@ using System.Windows.Media;
 internal class AppRootsTreeItem : TreeItem
 {
 	public AppRootsTreeItem(AppRoots appRoots, TreeItem? parent, TreeService treeService)
-	: base(appRoots, parent, treeService)
+	: base(appRoots.App, parent, treeService)
 	{
 		this.appRoots = appRoots;
 	}
