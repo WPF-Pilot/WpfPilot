@@ -7,10 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
-using System.Windows;
 using WpfPilot.AppDriverPayload.Commands;
 using WpfPilot.Interop;
 using WpfPilot.Utility;
@@ -166,7 +164,10 @@ public sealed class AppDriver : IDisposable
 	/// <summary>
 	/// Finds a WPF element matching the given criteria. No order is guaranteed.
 	/// <code>
+	/// ✏️ appDriver.GetElement(x => x["Name"] == "My_Cool_Button");
 	/// ✏️ appDriver.GetElement(x => x["Text"] == "Enter A Password");
+	/// ✏️ appDriver.GetElement(x => x.TypeName == nameof(App));
+	/// ✏️ appDriver.GetElement(x => x.TypeName == nameof(MainWindow));
 	/// </code>
 	/// </summary>
 	/// <exception cref="System.TimeoutException">Thrown when no element matching the criteria is found within timeoutMs.</exception>
@@ -250,6 +251,7 @@ public sealed class AppDriver : IDisposable
 	/// Returns an empty list if no elements are found. No order is guaranteed.
 	/// <code>
 	/// ✏️ appDriver.GetElements(x => x["Name"].StartsWith("ListItem"));
+	/// ✏️ appDriver.GetElements(x => x.TypeName == nameof(Button));
 	/// </code>
 	/// </summary>
 	public IReadOnlyList<Element> GetElements(Func<Element, bool?> matcher, int timeoutMs = 30_000)
@@ -356,6 +358,14 @@ public sealed class AppDriver : IDisposable
 				Kind = nameof(ScreenshotCommand),
 				Format = Path.GetExtension(fileOutputPath).Replace(".", ""),
 			});
+
+			var responseValue = PropInfo.GetPropertyValue(response, "Value");
+			if (responseValue is string s)
+			{
+				if (s == "PendingResult")
+					throw new TimeoutException($"{nameof(Screenshot)} timeout.");
+			}
+
 			if (previousResponse != null && previousResponse!.Base64Screenshot == response!.Base64Screenshot)
 			{
 				SaveImage(Convert.FromBase64String(response!.Base64Screenshot));
@@ -394,6 +404,13 @@ public sealed class AppDriver : IDisposable
 				Kind = nameof(ScreenshotCommand),
 				Format = format.ToString().ToLowerInvariant(),
 			});
+
+			var responseValue = PropInfo.GetPropertyValue(response, "Value");
+			if (responseValue is string s)
+			{
+				if (s == "PendingResult")
+					throw new TimeoutException($"{nameof(Screenshot)} timeout.");
+			}
 
 			if (previousResponse != null && previousResponse!.Base64Screenshot == response!.Base64Screenshot)
 				return Convert.FromBase64String(response!.Base64Screenshot);
@@ -497,110 +514,6 @@ public sealed class AppDriver : IDisposable
 			});
 
 		return RecordingTask;
-	}
-
-	/// <summary>
-	/// Runs the given expression within the context of the application. Returns the result of the expression if it is serializable, otherwise null.
-	/// The `Application.Current` is passed as the first parameter to the expression.
-	/// <code>
-	/// ✏️ var windowName = appDriver.RunCode(app => app.MainWindow.Name);
-	/// ✏️ appDriver.RunCode(_ => ScreenManager.SwitchToDarkMode());
-	/// </code>
-	/// </summary>
-	public T? RunCode<T>(Expression<Func<Application, T>> code)
-	{
-		_ = code ?? throw new ArgumentNullException(nameof(code));
-
-		var response = Channel.GetResponse(new
-		{
-			Kind = nameof(InvokeStaticCommand),
-			Code = Eval.SerializeCode(code)
-		});
-
-		var value = PropInfo.GetPropertyValue(response, "Value");
-		if (value is string s && s == "UnserializableResult")
-			return default;
-
-		#if !NET5_0_OR_GREATER
-			var type = value?.GetType();
-			if (type is not null && type.Name.StartsWith("<>f__AnonymousType"))
-				throw new InvalidOperationException("Anonymous return types are only supported in .NET 5+");
-		#endif
-
-		OnAction();
-		return value;
-	}
-
-	/// <summary>
-	/// Runs the given expression within the context of the application.
-	/// The `Application.Current` is passed as the first parameter to the expression.
-	/// <code>
-	/// ✏️ appDriver.RunCode(_ => GlobalCache.Clear());
-	/// ✏️ appDriver.RunCode(app => app.MainWindow.Focus());
-	/// </code>
-	/// </summary>
-	public void RunCode(Expression<Action<Application>> code)
-	{
-		_ = code ?? throw new ArgumentNullException(nameof(code));
-
-		var response = Channel.GetResponse(new
-		{
-			Kind = nameof(InvokeStaticCommand),
-			Code = Eval.SerializeCode(code)
-		});
-
-		OnAction();
-	}
-
-	/// <summary>
-	/// Runs the given async expression within the context of the application. Returns the result of the awaited expression if it is serializable, otherwise null.
-	/// The `Application.Current` is passed as the first parameter to the expression.
-	/// <code>
-	/// ✏️ var result = appDriver.RunCodeAsync(_ => GlobalRequest.MakeWebRequestAsync());
-	/// </code>
-	/// </summary>
-	public T? RunCodeAsync<T>(Expression<Func<Application, Task<T>>> code)
-	{
-		_ = code ?? throw new ArgumentNullException(nameof(code));
-
-		var response = Channel.GetResponse(new
-		{
-			Kind = nameof(InvokeStaticCommand),
-			Code = Eval.SerializeCode(code)
-		});
-
-		var value = PropInfo.GetPropertyValue(response, "Value");
-		if (value is string s && s == "UnserializableResult")
-			return default;
-
-#if !NET5_0_OR_GREATER
-		var type = value?.GetType();
-		if (type is not null && type.Name.StartsWith("<>f__AnonymousType"))
-			throw new InvalidOperationException("Anonymous return types are only supported in .NET 5+");
-#endif
-
-		OnAction();
-		return value;
-	}
-
-	/// <summary>
-	/// Runs the given async expression within the context of the application.
-	/// The `Application.Current` is passed as the first parameter to the expression.
-	/// <code>
-	/// ✏️ appDriver.RunCodeAsync(_ => GlobalRequest.MakeWebRequestAsync());
-	/// </code>
-	/// </summary>
-	public void RunCodeAsync(Expression<Func<Application, Task>> code)
-	{
-		_ = code ?? throw new ArgumentNullException(nameof(code));
-
-		var response = Channel.GetResponse(new
-		{
-			Kind = nameof(InvokeStaticCommand),
-			Code = Eval.SerializeCode(code)
-		});
-
-		OnAction();
 	}
 
 	private Element? DoGetElement(Func<Element, bool?> matcher, int timeoutMs)

@@ -108,10 +108,6 @@ public class Element<T> : Element
 	}
 
 	/// <inheritdoc />
-	public override T Invoke(Expression<Action<UIElement>> code, int timeoutMs = 10_000) =>
-		(T) base.Invoke(code, timeoutMs);
-
-	/// <inheritdoc />
 	public override T Invoke<TInput>(Expression<Action<TInput>> code, int timeoutMs = 10_000) =>
 		(T) base.Invoke(code, timeoutMs);
 
@@ -140,10 +136,6 @@ public class Element<T> : Element
 		OnAction();
 		return (T) this;
 	}
-
-	/// <inheritdoc />
-	public override T InvokeAsync(Expression<Func<UIElement, Task>> code, int timeoutMs = 10_000) =>
-		(T) base.InvokeAsync(code, timeoutMs);
 
 	/// <inheritdoc />
 	public override T InvokeAsync<TInput>(Expression<Func<TInput, Task>> code, int timeoutMs = 10_000) =>

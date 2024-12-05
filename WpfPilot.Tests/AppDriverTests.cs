@@ -90,9 +90,6 @@ public sealed class AppDriverTests : AppTestBase
 			Assert.AreEqual("Doe", PropInfo.GetPropertyValue(dynamicThingResult, "LastName"));
 		}
 
-		Assert.DoesNotThrow(() => appDriver.RunCode(_ => typeof(ExampleStaticClass).Invoke("UnserializableResult1")));
-		Assert.DoesNotThrow(() => appDriver.RunCode(_ => typeof(ExampleStaticClass).Invoke("UnserializableResult2")));
-
 		// Test `Screenshot` methods.
 		AssertImage.IsValid(appDriver.Screenshot());
 		AssertImage.IsValid(appDriver.Screenshot(ImageFormat.Jpeg));

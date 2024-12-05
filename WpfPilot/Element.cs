@@ -77,7 +77,7 @@ public class Element
 
 	public virtual Element Focus()
 	{
-		return Invoke(element => element.Focus());
+		return Invoke<UIElement>(element => element.Focus());
 	}
 
 	public virtual Element Select()
@@ -130,7 +130,7 @@ public class Element
 	public virtual Element Type(string text)
 	{
 		// Many controls don't require focus to be set before typing, but some do.
-		Invoke(element => element.Focus());
+		Invoke<UIElement>(element => element.Focus());
 
 		Expression<Action<Application>> code = app => KeyboardInput.Type(text);
 		var response = Channel.GetResponse(new
@@ -355,39 +355,6 @@ public class Element
 	/// <summary>
 	/// Executes the given expression on the underlying control.
 	/// <code>
-	/// ✏️ calendar.Invoke(x => x.ReleaseAllTouchCaptures());
-	/// </code>
-	/// </summary>
-	/// <param name="code">The expression to run on the control.</param>
-	/// <param name="timeoutMs">The maximum amount of time to give the expression to execute.</param>
-	/// <returns>The element so additional methods can be chained.</returns>
-	/// <exception cref="TimeoutException">
-	/// The Invoke expression ran for too long and was cut short.
-	/// </exception>
-	public virtual Element Invoke(Expression<Action<UIElement>> code, int timeoutMs = 10_000)
-	{
-		var response = Channel.GetResponse(new
-		{
-			Kind = nameof(InvokeCommand),
-			TargetId,
-			Code = Eval.SerializeCode(code),
-			TimeoutMs = timeoutMs,
-		}, timeoutMs: timeoutMs);
-
-		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s)
-		{
-			if (s == "PendingResult")
-				throw new TimeoutException($"{nameof(Invoke)} timeout.");
-		}
-
-		OnAction();
-		return this;
-	}
-
-	/// <summary>
-	/// Executes the given expression on the underlying control.
-	/// <code>
 	/// ✏️ calendar.Invoke&lt;Calendar&gt;(x => x.ResetCalendar());
 	/// </code>
 	/// </summary>
@@ -512,40 +479,6 @@ public class Element
 		}
 
 		result = (TOutput) responseValue;
-
-		OnAction();
-		return this;
-	}
-
-	/// <summary>
-	/// Executes the given async expression on the underlying control.<br/>
-	/// `await` should not be used in the expression, this is handled by WPF Pilot.
-	/// <code>
-	/// ✏️ calendar.Invoke(x => x.ReleaseAllTouchCapturesAsync());
-	/// </code>
-	/// </summary>
-	/// <param name="code">The expression to run on the control.</param>
-	/// <param name="timeoutMs">The maximum amount of time to give the expression to execute.</param>
-	/// <returns>The element so additional methods can be chained.</returns>
-	/// <exception cref="TimeoutException">
-	/// The InvokeAsync expression ran for too long and was cut short.
-	/// </exception>
-	public virtual Element InvokeAsync(Expression<Func<UIElement, Task>> code, int timeoutMs = 10_000)
-	{
-		var response = Channel.GetResponse(new
-		{
-			Kind = nameof(InvokeCommand),
-			TargetId,
-			Code = Eval.SerializeCode(code),
-			TimeoutMs = timeoutMs,
-		}, timeoutMs: timeoutMs);
-
-		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s)
-		{
-			if (s == "PendingResult")
-				throw new TimeoutException($"{nameof(InvokeAsync)} timeout.");
-		}
 
 		OnAction();
 		return this;
