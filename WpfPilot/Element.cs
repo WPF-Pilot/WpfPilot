@@ -132,11 +132,12 @@ public class Element
 		// Many controls don't require focus to be set before typing, but some do.
 		Invoke<UIElement>(element => element.Focus());
 
-		Expression<Action<Application>> code = app => KeyboardInput.Type(text);
+		Expression<Action<UIElement>> code = _ => KeyboardInput.Type(text);
 		var response = Channel.GetResponse(new
 		{
-			Kind = nameof(InvokeStaticCommand),
-			Code = Eval.SerializeCode(code)
+			Kind = nameof(InvokeCommand),
+			Code = Eval.SerializeCode(code),
+			TargetId,
 		});
 
 		OnAction();

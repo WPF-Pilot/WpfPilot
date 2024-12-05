@@ -143,10 +143,6 @@ public static class AppDriverPayload
 				Log.Info("Processing Invoke command", command.Value);
 				await InvokeCommand.ProcessAsync(command, treeService.RootTreeItem);
 				break;
-			case nameof(InvokeStaticCommand):
-				Log.Info("Processing InvokeStatic command", command.Value);
-				await InvokeStaticCommand.ProcessAsync(command);
-				break;
 			case nameof(RaiseEventCommand):
 				Log.Info("Processing RaiseEvent command", command.Value);
 				RaiseEventCommand.Process(command, treeService.RootTreeItem);
