@@ -39,7 +39,6 @@ The `AppDriver` is responsible for launching or attaching to an app and finding 
 - `AppDriver.GetElement(s)`
 - `AppDriver.Screenshot`
 - `AppDriver.Record`
-- `AppDriver.RunCode`
 - `AppDriver.Keyboard` (property)
 
 **Element**
