@@ -25,6 +25,8 @@ Guiding principles of WPF Pilot include:
 
 WPF Pilot works on Windows and requires .NET Framework 4.5.2+, .NET Core 3.1+, or .NET 5+.
 
+⚠️ Support for .NET 9.0 is on the way. Everything below .NET 9.0 should work and has been tested.
+
 ## API
 
 There are only **4** core classes to learn, with a small handful of methods on each class. WPF Pilot strives to keep the API surface minimal, and encourages you to write your own helper methods for your specific domain. For brevity, not every method or class is documented below.
