@@ -25,7 +25,12 @@ internal static class RaiseEventCommand
 			throw new ArgumentException($"Invalid TargetId `{targetIdString}`");
 
 		var getRoutedEventArgs = PropInfo.GetPropertyValue(command.Value, "GetRoutedEventArgs") ?? throw new ArgumentNullException("Missing GetRoutedEventArgs property.");
-		var target = TreeItem.GetTarget(appRoot, targetId) ?? throw new InvalidOperationException("Stale element. Cannot find the target element in the Visual Tree.");
+		var target = TreeItem.GetTarget(appRoot, targetId);
+		if (target is null)
+		{
+			command.Respond(new { Value = "StaleElement" });
+			return;
+		}
 
 		var targetUIElement = target as UIElement;
 		if (targetUIElement is null)

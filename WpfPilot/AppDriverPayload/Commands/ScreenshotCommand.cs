@@ -22,7 +22,13 @@ internal static class ScreenshotCommand
 			if (!Guid.TryParse(targetIdString, out var targetId))
 				throw new InvalidOperationException($"Invalid TargetId: {targetIdString}");
 
-			var target = TreeItem.GetTarget(appRoot, targetId) ?? throw new InvalidOperationException("Stale element. Cannot find the target element in the Visual Tree.");
+			var target = TreeItem.GetTarget(appRoot, targetId);
+			if (target is null)
+			{
+				command.Respond(new { Value = "StaleElement" });
+				return;
+			}
+
 			var uiElement = target as UIElement;
 
 			// Small hack: when the target is an `Application`, we screenshot the main window instead.

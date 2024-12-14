@@ -21,7 +21,12 @@ internal static class SetPropertyCommand
 
 		var arg = PropInfo.GetPropertyValue(command.Value, "PropertyValue") ?? throw new ArgumentNullException($"Missing PropertyValue property.");
 		var propertyName = PropInfo.GetPropertyValue(command.Value, "PropertyName") ?? throw new ArgumentNullException($"Missing PropertyName property.");
-		var target = TreeItem.GetTarget(appRoot, targetId) ?? throw new InvalidOperationException("Stale element. Cannot find the target element in the Visual Tree.");
+		var target = TreeItem.GetTarget(appRoot, targetId);
+		if (target is null)
+		{
+			command.Respond(new { Value = "StaleElement" });
+			return;
+		}
 
 		// Deserialize the property.
 		arg = ArgsMapper.MapSingle(arg);
