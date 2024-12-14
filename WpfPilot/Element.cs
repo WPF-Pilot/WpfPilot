@@ -30,6 +30,8 @@ public class Element
 		Properties = other.Properties;
 		TargetIdToElement = other.TargetIdToElement;
 		Channel = other.Channel;
+		Matcher = other.Matcher;
+		TryFixStaleElement = other.TryFixStaleElement;
 		OnAction = other.OnAction;
 		OnAccessProperty = other.OnAccessProperty;
 		ParentId = other.ParentId;
@@ -47,6 +49,7 @@ public class Element
 		IReadOnlyDictionary<string, object> properties,
 		IReadOnlyDictionary<string, List<Element>> targetIdToElement,
 		NamedPipeClient channel,
+		Action<Element> tryFixStaleElement,
 		Action onAction,
 		Action<string> onAccessProperty)
 	{
@@ -56,6 +59,7 @@ public class Element
 		ChildIds = childIds ?? throw new ArgumentNullException(nameof(childIds));
 		TargetIdToElement = targetIdToElement ?? throw new ArgumentNullException(nameof(targetIdToElement));
 		Channel = channel ?? throw new ArgumentNullException(nameof(channel));
+		TryFixStaleElement = tryFixStaleElement ?? throw new ArgumentNullException(nameof(tryFixStaleElement));
 		OnAction = onAction ?? throw new ArgumentNullException(nameof(onAction));
 		OnAccessProperty = onAccessProperty ?? throw new ArgumentNullException(nameof(onAccessProperty));
 		ParentId = parentId;
@@ -156,16 +160,19 @@ public class Element
 		fileOutputPath = Environment.ExpandEnvironmentVariables(fileOutputPath);
 		fileOutputPath = Path.GetFullPath(fileOutputPath);
 
+		TryFixStaleElementIfNecessary();
+
 		var start = Environment.TickCount;
 		dynamic? previousResponse = null;
 		while (Environment.TickCount - start < 5000)
 		{
-			var response = Channel.GetResponse(new
+			dynamic? GetResponse() => Channel.GetResponse(new
 			{
 				Kind = nameof(ScreenshotCommand),
 				Format = Path.GetExtension(fileOutputPath).Replace(".", ""), // "png", "jpg", etc.
 				TargetId,
 			});
+			var response = RetryIfStale(GetResponse);
 
 			if (previousResponse != null && previousResponse!.Base64Screenshot == response!.Base64Screenshot)
 			{
@@ -199,16 +206,19 @@ public class Element
 	/// </summary>
 	public virtual Element Screenshot(out byte[] screenshotBytes, ImageFormat format = ImageFormat.Jpeg)
 	{
+		TryFixStaleElementIfNecessary();
+
 		var start = Environment.TickCount;
 		dynamic? previousResponse = null;
 		while (Environment.TickCount - start < 5000)
 		{
-			var response = Channel.GetResponse(new
+			dynamic? GetResponse() => Channel.GetResponse(new
 			{
 				Kind = nameof(ScreenshotCommand),
 				Format = format.ToString().ToLowerInvariant(),
 				TargetId,
 			});
+			var response = RetryIfStale(GetResponse);
 
 			if (previousResponse != null && previousResponse!.Base64Screenshot == response!.Base64Screenshot)
 			{
@@ -245,12 +255,14 @@ public class Element
 	public virtual Element RaiseEvent<TInput>(Expression<Func<TInput, RoutedEventArgs>> code)
 		where TInput : UIElement
 	{
-		var response = Channel.GetResponse(new
+		TryFixStaleElementIfNecessary();
+		dynamic? GetResponse() => Channel.GetResponse(new
 		{
 			Kind = nameof(RaiseEventCommand),
 			TargetId,
 			GetRoutedEventArgs = Eval.SerializeCode(code),
 		});
+		RetryIfStale(GetResponse);
 
 		OnAction();
 		return this;
@@ -282,23 +294,16 @@ public class Element
 	/// </exception>
 	public TOutput Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code, int timeoutMs = 10_000)
 	{
-		var response = Channel.GetResponse(new
+		TryFixStaleElementIfNecessary();
+		dynamic? GetResponse() => Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
 			TimeoutMs = timeoutMs
 		}, timeoutMs: timeoutMs);
-
+		var response = RetryIfStaleInvoke(GetResponse, throwOnUnserializable: true, nameof(Invoke));
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s)
-		{
-			if (s == "UnserializableResult")
-				throw new SerializationException($"{nameof(Invoke)} result is not serializable.");
-			if (s == "PendingResult")
-				throw new TimeoutException($"{nameof(Invoke)} timeout.");
-		}
-
 		var result = (TOutput) responseValue;
 
 		OnAction();
@@ -330,23 +335,16 @@ public class Element
 	/// </exception>
 	public virtual Element Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code, out TOutput result, int timeoutMs = 10_000)
 	{
-		var response = Channel.GetResponse(new
+		TryFixStaleElementIfNecessary();
+		dynamic? GetResponse() => Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
 			TimeoutMs = timeoutMs,
 		}, timeoutMs: timeoutMs);
-
+		var response = RetryIfStaleInvoke(GetResponse, throwOnUnserializable: true, nameof(Invoke));
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s)
-		{
-			if (s == "UnserializableResult")
-				throw new SerializationException($"Unserializable {nameof(Invoke)} result received.");
-			if (s == "PendingResult")
-				throw new TimeoutException($"{nameof(Invoke)} timeout.");
-		}
-
 		result = (TOutput) responseValue;
 
 		OnAction();
@@ -367,20 +365,15 @@ public class Element
 	/// </exception>
 	public virtual Element Invoke<TInput>(Expression<Action<TInput>> code, int timeoutMs = 10_000)
 	{
-		var response = Channel.GetResponse(new
+		TryFixStaleElementIfNecessary();
+		dynamic? GetResponse() => Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
 			TimeoutMs = timeoutMs,
 		}, timeoutMs: timeoutMs);
-
-		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s)
-		{
-			if (s == "PendingResult")
-				throw new TimeoutException($"{nameof(Invoke)} timeout.");
-		}
+		RetryIfStaleInvoke(GetResponse, throwOnUnserializable: false, nameof(Invoke));
 
 		OnAction();
 		return this;
@@ -413,23 +406,16 @@ public class Element
 	/// </exception>
 	public TOutput InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code, int timeoutMs = 10_000)
 	{
-		var response = Channel.GetResponse(new
+		TryFixStaleElementIfNecessary();
+		dynamic? GetResponse() => Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
 			TimeoutMs = timeoutMs,
 		}, timeoutMs: timeoutMs);
-
+		var response = RetryIfStaleInvoke(GetResponse, throwOnUnserializable: true, nameof(InvokeAsync));
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s)
-		{
-			if (s == "UnserializableResult")
-				throw new SerializationException($"Unserializable {nameof(InvokeAsync)} result received.");
-			if (s == "PendingResult")
-				throw new TimeoutException($"{nameof(InvokeAsync)} timeout.");
-		}
-
 		var result = (TOutput) responseValue;
 
 		OnAction();
@@ -462,23 +448,16 @@ public class Element
 	/// </exception>
 	public virtual Element InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code, out TOutput result, int timeoutMs = 10_000)
 	{
-		var response = Channel.GetResponse(new
+		TryFixStaleElementIfNecessary();
+		dynamic? GetResponse() => Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
 			TimeoutMs = timeoutMs,
 		}, timeoutMs: timeoutMs);
-
+		var response = RetryIfStaleInvoke(GetResponse, throwOnUnserializable: true, nameof(InvokeAsync));
 		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s)
-		{
-			if (s == "UnserializableResult")
-				throw new SerializationException($"Unserializable {nameof(InvokeAsync)} result received.");
-			if (s == "PendingResult")
-				throw new TimeoutException($"{nameof(InvokeAsync)} timeout.");
-		}
-
 		result = (TOutput) responseValue;
 
 		OnAction();
@@ -500,20 +479,15 @@ public class Element
 	/// </exception>
 	public virtual Element InvokeAsync<TInput>(Expression<Func<TInput, Task>> code, int timeoutMs = 10_000)
 	{
-		var response = Channel.GetResponse(new
+		TryFixStaleElementIfNecessary();
+		dynamic? GetResponse() => Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
 			TargetId,
 			Code = Eval.SerializeCode(code),
 			TimeoutMs = timeoutMs,
 		}, timeoutMs: timeoutMs);
-
-		var responseValue = PropInfo.GetPropertyValue(response, "Value");
-		if (responseValue is string s)
-		{
-			if (s == "PendingResult")
-				throw new TimeoutException($"{nameof(InvokeAsync)} timeout.");
-		}
+		var response = RetryIfStaleInvoke(GetResponse, throwOnUnserializable: false, nameof(InvokeAsync));
 
 		OnAction();
 		return this;
@@ -526,7 +500,8 @@ public class Element
 	/// </summary>
 	public virtual Element SetProperty(string propertyName, object? value)
 	{
-		var response = Channel.GetResponse(new
+		TryFixStaleElementIfNecessary();
+		dynamic? GetResponse() => Channel.GetResponse(new
 		{
 			Kind = nameof(SetPropertyCommand),
 			TargetId,
@@ -537,6 +512,7 @@ public class Element
 				_ => WrappedArg<object>.Wrap(value),
 			}
 		});
+		RetryIfStale(GetResponse);
 
 		OnAction();
 		return this;
@@ -549,13 +525,15 @@ public class Element
 	/// </summary>
 	public virtual Element SetProperty<TInput, TOutput>(string propertyName, Expression<Func<TInput, TOutput>> getValue)
 	{
-		var response = Channel.GetResponse(new
+		TryFixStaleElementIfNecessary();
+		dynamic? GetResponse() => Channel.GetResponse(new
 		{
 			Kind = nameof(SetPropertyCommand),
 			TargetId,
 			PropertyName = propertyName,
 			PropertyValue = Eval.SerializeCode(getValue),
 		});
+		RetryIfStale(GetResponse);
 
 		OnAction();
 		return this;
@@ -607,27 +585,6 @@ public class Element
 		set => SetProperty(propName, value);
 	}
 
-	internal void Refresh(string typeName, IReadOnlyDictionary<string, object> properties, string? parentId, IReadOnlyList<string> childIds)
-	{
-		TypeName = typeName;
-		Properties = properties;
-		ParentId = parentId;
-		ChildIds = childIds;
-	}
-
-	private Element DoClick(string mouseButton)
-	{
-		var response = Channel.GetResponse(new
-		{
-			Kind = nameof(ClickCommand),
-			TargetId,
-			MouseButton = mouseButton,
-		});
-
-		OnAction();
-		return this;
-	}
-
 	/// <summary>
 	/// <code>
 	/// ✏️ element.TypeName -> "Button", "TextBox", etc.
@@ -647,13 +604,95 @@ public class Element
 		get => ChildIds.Select(x => TargetIdToElement[x][0]).ToList();
 	}
 
-	internal string TargetId { get; private set; } // Dynamic ID. It is not stable across runs or major tree changes.
+	internal void Refresh(
+		string typeName,
+		IReadOnlyDictionary<string, object> properties,
+		string? parentId,
+		IReadOnlyList<string> childIds)
+	{
+		TypeName = typeName;
+		Properties = properties;
+		ParentId = parentId;
+		ChildIds = childIds;
+	}
+
+	private Element DoClick(string mouseButton)
+	{
+		TryFixStaleElementIfNecessary();
+		dynamic? GetResponse() => Channel.GetResponse(new
+		{
+			Kind = nameof(ClickCommand),
+			TargetId,
+			MouseButton = mouseButton,
+		});
+		RetryIfStale(GetResponse);
+
+		OnAction();
+		return this;
+	}
+
+	private dynamic? RetryIfStale(Func<dynamic?> getResponse)
+	{
+		var response = getResponse();
+		var responseValue = PropInfo.GetPropertyValue(response, "Value");
+
+		if (responseValue is string s1 && s1 == "StaleElement")
+		{
+			TryFixStaleElement(this);
+			response = getResponse();
+		}
+
+		responseValue = PropInfo.GetPropertyValue(response, "Value");
+		if (responseValue is string s2 && s2 == "StaleElement")
+			throw new InvalidOperationException("Element is no longer in the Visual Tree.");
+
+		return response;
+	}
+
+	private dynamic? RetryIfStaleInvoke(Func<dynamic?> getResponse, bool throwOnUnserializable, string caller)
+	{
+		var response = getResponse();
+		var responseValue = PropInfo.GetPropertyValue(response, "Value") as string;
+
+		if (responseValue == "PendingResult")
+			throw new TimeoutException($"{caller} timeout.");
+		if (throwOnUnserializable && responseValue == "UnserializableResult")
+			throw new SerializationException($"Unserializable {caller} result received.");
+
+		// Try again on stale element.
+		if (responseValue == "StaleElement")
+		{
+			TryFixStaleElement(this);
+
+			response = getResponse();
+			responseValue = PropInfo.GetPropertyValue(response, "Value") as string;
+			if (responseValue == "PendingResult")
+				throw new TimeoutException($"{caller} timeout.");
+			if (throwOnUnserializable && responseValue == "UnserializableResult")
+				throw new SerializationException($"Unserializable {caller} result received.");
+			if (responseValue == "StaleElement")
+				throw new InvalidOperationException("Element is no longer in the Visual Tree.");
+		}
+
+		return response;
+	}
+
+	private void TryFixStaleElementIfNecessary()
+	{
+		var isStale = !TargetIdToElement.ContainsKey(TargetId);
+		if (isStale)
+			TryFixStaleElement(this);
+	}
+
+	internal string TargetId { get; set; } // Dynamic ID. It is not stable across runs or major tree changes.
 	internal NamedPipeClient Channel { get; }
 	internal Action OnAction { get; }
+	internal IReadOnlyDictionary<string, object> Properties { get; set; }
+	internal string? ParentId { get; set; }
+	internal IReadOnlyList<string> ChildIds { get; set; }
+	internal Func<Element, bool?>? Matcher { get; set; }
 
-	private string? ParentId { get; set; }
-	private IReadOnlyList<string> ChildIds { get; set; }
-	private IReadOnlyDictionary<string, object> Properties { get; set; }
 	private IReadOnlyDictionary<string, List<Element>> TargetIdToElement { get; set; }
+	private Action<Element> TryFixStaleElement { get; }
 	private Action<string> OnAccessProperty { get; }
 }

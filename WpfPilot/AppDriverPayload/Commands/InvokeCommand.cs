@@ -18,7 +18,13 @@ internal static class InvokeCommand
 		if (!Guid.TryParse(targetIdString, out Guid targetId))
 			throw new ArgumentException($"Invalid TargetId `{targetIdString}`");
 
-		var target = TreeItem.GetTarget(appRoot, targetId) ?? throw new InvalidOperationException("Stale element. Cannot find the target element in the Visual Tree.");
+		var target = TreeItem.GetTarget(appRoot, targetId);
+		if (target is null)
+		{
+			command.Respond(new { Value = "StaleElement" });
+			return;
+		}
+
 		var code = PropInfo.GetPropertyValue(command.Value, "Code") ?? throw new ArgumentNullException("Missing Code property.");
 
 		if (target is DependencyObject dp)
