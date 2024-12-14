@@ -585,6 +585,25 @@ public class Element
 		set => SetProperty(propName, value);
 	}
 
+	/// <summary>
+	/// <code>
+	/// ✏️ element.TypeName -> "Button", "TextBox", etc.
+	/// </code>
+	/// </summary>
+	public string TypeName { get; private set; }
+
+	[JsonIgnore] // Prevents infinite loop when serializing.
+	public Element? Parent
+	{
+		get => ParentId == null ? null : TargetIdToElement[ParentId][0];
+	}
+
+	[JsonIgnore] // Prevents infinite loop when serializing.
+	public IReadOnlyList<Element> Child
+	{
+		get => ChildIds.Select(x => TargetIdToElement[x][0]).ToList();
+	}
+
 	internal void Refresh(
 		string typeName,
 		IReadOnlyDictionary<string, object> properties,
@@ -658,32 +677,12 @@ public class Element
 		return response;
 	}
 
-	/// <summary>
-	/// <code>
-	/// ✏️ element.TypeName -> "Button", "TextBox", etc.
-	/// </code>
-	/// </summary>
-	public string TypeName { get; private set; }
-
-	[JsonIgnore] // Prevents infinite loop when serializing.
-	public Element? Parent
-	{
-		get => ParentId == null ? null : TargetIdToElement[ParentId][0];
-	}
-
-	[JsonIgnore] // Prevents infinite loop when serializing.
-	public IReadOnlyList<Element> Child
-	{
-		get => ChildIds.Select(x => TargetIdToElement[x][0]).ToList();
-	}
-
 	private void TryFixStaleElementIfNecessary()
 	{
-		if (IsStale)
+		var isStale = !TargetIdToElement.ContainsKey(TargetId);
+		if (isStale)
 			TryFixStaleElement(this);
 	}
-
-	private bool IsStale => !TargetIdToElement.ContainsKey(TargetId);
 
 	internal string TargetId { get; set; } // Dynamic ID. It is not stable across runs or major tree changes.
 	internal NamedPipeClient Channel { get; }
