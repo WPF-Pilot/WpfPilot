@@ -658,105 +658,106 @@ public sealed class AppDriver : IDisposable
 						unwrappedProperties,
 						TargetIdToElement,
 						Channel,
+						(Action<Element>) TryFixStaleElement,
 						(Action) OnAction,
 						(Action<string>) OnAccessProperty)
 				};
 			}
 		}
 
-		// Temp disable OnAccessProperty to avoid infinite loops when using `staleElement.Matcher`.
-		IsOnAccessPropertyDisabled = true;
-
-		// Fix stale elements, if possible.
-		foreach (var staleTargetId in staleTargetIds)
-		{
-			var staleElement = TargetIdToElement[staleTargetId][0];
-
-			staleElement.Properties.TryGetValue("Name", out var staleName);
-			staleElement.Properties.TryGetValue("Title", out var staleTitle);
-			staleElement.Properties.TryGetValue("AutomationProperties.Name", out var staleAutomationName);
-			staleElement.Properties.TryGetValue("AutomationProperties.AutomationId", out var staleAutomationId);
-			var hasWidth = staleElement.Properties.TryGetValue("ActualWidth", out var staleActualWidth);
-			var hasHeight = staleElement.Properties.TryGetValue("ActualHeight", out var staleActualHeight);
-
-			// Nothing to match with.
-			if (IsEmpty(staleName) && IsEmpty(staleTitle) && IsEmpty(staleAutomationName) && IsEmpty(staleAutomationId) && staleElement.Matcher == null)
-				continue;
-
-			var candidates = new HashSet<(Element Element, int Score)>();
-
-			foreach (var element in TargetIdToElement.Values.SelectMany(x => x))
-			{
-				// Ignore stale elements.
-				if (staleTargetIds.Contains(element.TargetId))
-					continue;
-
-				// Check for match.
-				if (!IsEmpty(staleAutomationId) && element.Properties.TryGetValue("AutomationProperties.AutomationId", out var automationId) && staleAutomationId == automationId)
-				{
-					candidates.Add((element, 100));
-					continue;
-				}
-
-				// Check for match.
-				if (!IsEmpty(staleAutomationName) && element.Properties.TryGetValue("AutomationProperties.Name", out var automationName) && staleAutomationName == automationName)
-				{
-					candidates.Add((element, 100));
-					continue;
-				}
-
-				// Check for match.
-				if (!IsEmpty(staleName) && element.Properties.TryGetValue("Name", out var name) && staleName == name)
-				{
-					candidates.Add((element, 50));
-					continue;
-				}
-
-				// Check for match.
-				if (!IsEmpty(staleTitle) && element.Properties.TryGetValue("Title", out var title) && staleTitle == title)
-				{
-					candidates.Add((element, 5));
-					continue;
-				}
-
-				// Check for match.
-				if (staleElement.Matcher != null && staleElement.Matcher(element) == true)
-				{
-					candidates.Add((element, 1));
-					continue;
-				}
-			}
-
-			var sorted = candidates.OrderBy(x =>
-			{
-				var score = x.Score;
-
-				// Prefer elements with matching width and height.
-				if (hasWidth && x.Element.Properties.TryGetValue("ActualWidth", out var actualWidth) && staleActualWidth == actualWidth)
-					score += 50;
-				if (hasHeight && x.Element.Properties.TryGetValue("ActualHeight", out var actualHeight) && staleActualHeight == actualHeight)
-					score += 50;
-
-				return score;
-			}).ToList();
-
-			if (sorted.Count != 0)
-			{
-				var bestMatch = sorted.Last().Element;
-				foreach (var e in TargetIdToElement[staleTargetId])
-				{
-					e.TargetId = bestMatch.TargetId;
-					e.Refresh(bestMatch.TypeName, bestMatch.Properties, bestMatch.ParentId, bestMatch.ChildIds);
-					TargetIdToElement[e.TargetId].Add(e);
-				}
-			}
-		}
-
-		IsOnAccessPropertyDisabled = false;
-
 		// Remove stale elements.
 		foreach (var staleTargetId in staleTargetIds)
 			TargetIdToElement.Remove(staleTargetId);
+	}
+
+	private void TryFixStaleElement(Element staleElement)
+	{
+		// Refresh the visual tree to make sure we're up to date.
+		List<Node> nodes = Channel.GetResponse(new
+		{
+			Kind = nameof(GetVisualTreeCommand),
+			PropNames,
+		})!;
+		RefreshVisualTree(nodes);
+		IsElementCacheValid = true;
+
+		// Temp disable OnAccessProperty to avoid infinite loops when using `staleElement.Matcher`.
+		IsOnAccessPropertyDisabled = true;
+
+		staleElement.Properties.TryGetValue("Name", out var staleName);
+		staleElement.Properties.TryGetValue("Title", out var staleTitle);
+		staleElement.Properties.TryGetValue("AutomationProperties.Name", out var staleAutomationName);
+		staleElement.Properties.TryGetValue("AutomationProperties.AutomationId", out var staleAutomationId);
+		var hasWidth = staleElement.Properties.TryGetValue("ActualWidth", out var staleActualWidth);
+		var hasHeight = staleElement.Properties.TryGetValue("ActualHeight", out var staleActualHeight);
+
+		// Nothing to match with.
+		if (IsEmpty(staleName) && IsEmpty(staleTitle) && IsEmpty(staleAutomationName) && IsEmpty(staleAutomationId) && staleElement.Matcher == null)
+			return;
+
+		var candidates = new HashSet<(Element Element, int Score)>();
+
+		foreach (var element in TargetIdToElement.Values.SelectMany(x => x))
+		{
+			// Check for match.
+			if (!IsEmpty(staleAutomationId) && element.Properties.TryGetValue("AutomationProperties.AutomationId", out var automationId) && staleAutomationId == automationId)
+			{
+				candidates.Add((element, 100));
+				continue;
+			}
+
+			// Check for match.
+			if (!IsEmpty(staleAutomationName) && element.Properties.TryGetValue("AutomationProperties.Name", out var automationName) && staleAutomationName == automationName)
+			{
+				candidates.Add((element, 100));
+				continue;
+			}
+
+			// Check for match.
+			if (!IsEmpty(staleName) && element.Properties.TryGetValue("Name", out var name) && staleName == name)
+			{
+				candidates.Add((element, 50));
+				continue;
+			}
+
+			// Check for match.
+			if (!IsEmpty(staleTitle) && element.Properties.TryGetValue("Title", out var title) && staleTitle == title)
+			{
+				candidates.Add((element, 5));
+				continue;
+			}
+
+			// Check for match.
+			if (staleElement.Matcher != null && staleElement.Matcher(element) == true)
+			{
+				candidates.Add((element, 1));
+				continue;
+			}
+		}
+
+		var sorted = candidates.OrderBy(x =>
+		{
+			var score = x.Score;
+
+			// Prefer elements with matching width and height.
+			if (hasWidth && x.Element.Properties.TryGetValue("ActualWidth", out var actualWidth) && staleActualWidth == actualWidth)
+				score += 50;
+			if (hasHeight && x.Element.Properties.TryGetValue("ActualHeight", out var actualHeight) && staleActualHeight == actualHeight)
+				score += 50;
+
+			return score;
+		}).ToList();
+
+		if (sorted.Count != 0)
+		{
+			var bestMatch = sorted.Last().Element;
+			staleElement.TargetId = bestMatch.TargetId;
+			staleElement.Matcher = bestMatch.Matcher;
+			staleElement.Refresh(bestMatch.TypeName, bestMatch.Properties, bestMatch.ParentId, bestMatch.ChildIds);
+			TargetIdToElement[staleElement.TargetId].Add(staleElement);
+		}
+
+		IsOnAccessPropertyDisabled = false;
 	}
 
 	private static bool IsEmpty(object? s)

@@ -31,6 +31,7 @@ public class Element
 		TargetIdToElement = other.TargetIdToElement;
 		Channel = other.Channel;
 		Matcher = other.Matcher;
+		TryFixStaleElement = other.TryFixStaleElement;
 		OnAction = other.OnAction;
 		OnAccessProperty = other.OnAccessProperty;
 		ParentId = other.ParentId;
@@ -48,6 +49,7 @@ public class Element
 		IReadOnlyDictionary<string, object> properties,
 		IReadOnlyDictionary<string, List<Element>> targetIdToElement,
 		NamedPipeClient channel,
+		Action<Element> tryFixStaleElement,
 		Action onAction,
 		Action<string> onAccessProperty)
 	{
@@ -57,6 +59,7 @@ public class Element
 		ChildIds = childIds ?? throw new ArgumentNullException(nameof(childIds));
 		TargetIdToElement = targetIdToElement ?? throw new ArgumentNullException(nameof(targetIdToElement));
 		Channel = channel ?? throw new ArgumentNullException(nameof(channel));
+		TryFixStaleElement = tryFixStaleElement ?? throw new ArgumentNullException(nameof(tryFixStaleElement));
 		OnAction = onAction ?? throw new ArgumentNullException(nameof(onAction));
 		OnAccessProperty = onAccessProperty ?? throw new ArgumentNullException(nameof(onAccessProperty));
 		ParentId = parentId;
@@ -157,6 +160,8 @@ public class Element
 		fileOutputPath = Environment.ExpandEnvironmentVariables(fileOutputPath);
 		fileOutputPath = Path.GetFullPath(fileOutputPath);
 
+		TryFixStaleElementIfNecessary();
+
 		var start = Environment.TickCount;
 		dynamic? previousResponse = null;
 		while (Environment.TickCount - start < 5000)
@@ -200,6 +205,8 @@ public class Element
 	/// </summary>
 	public virtual Element Screenshot(out byte[] screenshotBytes, ImageFormat format = ImageFormat.Jpeg)
 	{
+		TryFixStaleElementIfNecessary();
+
 		var start = Environment.TickCount;
 		dynamic? previousResponse = null;
 		while (Environment.TickCount - start < 5000)
@@ -246,6 +253,7 @@ public class Element
 	public virtual Element RaiseEvent<TInput>(Expression<Func<TInput, RoutedEventArgs>> code)
 		where TInput : UIElement
 	{
+		TryFixStaleElementIfNecessary();
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(RaiseEventCommand),
@@ -283,6 +291,7 @@ public class Element
 	/// </exception>
 	public TOutput Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code, int timeoutMs = 10_000)
 	{
+		TryFixStaleElementIfNecessary();
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
@@ -331,6 +340,7 @@ public class Element
 	/// </exception>
 	public virtual Element Invoke<TInput, TOutput>(Expression<Func<TInput, TOutput>> code, out TOutput result, int timeoutMs = 10_000)
 	{
+		TryFixStaleElementIfNecessary();
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
@@ -368,6 +378,7 @@ public class Element
 	/// </exception>
 	public virtual Element Invoke<TInput>(Expression<Action<TInput>> code, int timeoutMs = 10_000)
 	{
+		TryFixStaleElementIfNecessary();
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
@@ -414,6 +425,7 @@ public class Element
 	/// </exception>
 	public TOutput InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code, int timeoutMs = 10_000)
 	{
+		TryFixStaleElementIfNecessary();
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
@@ -463,6 +475,7 @@ public class Element
 	/// </exception>
 	public virtual Element InvokeAsync<TInput, TOutput>(Expression<Func<TInput, Task<TOutput>>> code, out TOutput result, int timeoutMs = 10_000)
 	{
+		TryFixStaleElementIfNecessary();
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
@@ -501,6 +514,7 @@ public class Element
 	/// </exception>
 	public virtual Element InvokeAsync<TInput>(Expression<Func<TInput, Task>> code, int timeoutMs = 10_000)
 	{
+		TryFixStaleElementIfNecessary();
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(InvokeCommand),
@@ -527,6 +541,7 @@ public class Element
 	/// </summary>
 	public virtual Element SetProperty(string propertyName, object? value)
 	{
+		TryFixStaleElementIfNecessary();
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(SetPropertyCommand),
@@ -550,6 +565,7 @@ public class Element
 	/// </summary>
 	public virtual Element SetProperty<TInput, TOutput>(string propertyName, Expression<Func<TInput, TOutput>> getValue)
 	{
+		TryFixStaleElementIfNecessary();
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(SetPropertyCommand),
@@ -573,6 +589,8 @@ public class Element
 	{
 		if (predicateExpression == null)
 			throw new ArgumentNullException(nameof(predicateExpression));
+
+		TryFixStaleElementIfNecessary();
 
 		var parameter = DebugValueExpressionVisitor.GetDebugExpresssion(TypeName, this);
 		var assertable = Assertable.FromValueExpression(this, parameter, OnAction);
@@ -622,6 +640,7 @@ public class Element
 
 	private Element DoClick(string mouseButton)
 	{
+		TryFixStaleElementIfNecessary();
 		var response = Channel.GetResponse(new
 		{
 			Kind = nameof(ClickCommand),
@@ -652,6 +671,14 @@ public class Element
 		get => ChildIds.Select(x => TargetIdToElement[x][0]).ToList();
 	}
 
+	private void TryFixStaleElementIfNecessary()
+	{
+		if (IsStale)
+			TryFixStaleElement(this);
+	}
+
+	private bool IsStale => !TargetIdToElement.ContainsKey(TargetId);
+
 	internal string TargetId { get; set; } // Dynamic ID. It is not stable across runs or major tree changes.
 	internal NamedPipeClient Channel { get; }
 	internal Action OnAction { get; }
@@ -661,5 +688,6 @@ public class Element
 	internal Func<Element, bool?>? Matcher { get; set; }
 
 	private IReadOnlyDictionary<string, List<Element>> TargetIdToElement { get; set; }
+	private Action<Element> TryFixStaleElement { get; }
 	private Action<string> OnAccessProperty { get; }
 }
