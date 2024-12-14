@@ -30,6 +30,7 @@ public class Element
 		Properties = other.Properties;
 		TargetIdToElement = other.TargetIdToElement;
 		Channel = other.Channel;
+		Matcher = other.Matcher;
 		OnAction = other.OnAction;
 		OnAccessProperty = other.OnAccessProperty;
 		ParentId = other.ParentId;
@@ -607,7 +608,11 @@ public class Element
 		set => SetProperty(propName, value);
 	}
 
-	internal void Refresh(string typeName, IReadOnlyDictionary<string, object> properties, string? parentId, IReadOnlyList<string> childIds)
+	internal void Refresh(
+		string typeName,
+		IReadOnlyDictionary<string, object> properties,
+		string? parentId,
+		IReadOnlyList<string> childIds)
 	{
 		TypeName = typeName;
 		Properties = properties;
@@ -647,13 +652,14 @@ public class Element
 		get => ChildIds.Select(x => TargetIdToElement[x][0]).ToList();
 	}
 
-	internal string TargetId { get; private set; } // Dynamic ID. It is not stable across runs or major tree changes.
+	internal string TargetId { get; set; } // Dynamic ID. It is not stable across runs or major tree changes.
 	internal NamedPipeClient Channel { get; }
 	internal Action OnAction { get; }
+	internal IReadOnlyDictionary<string, object> Properties { get; set; }
+	internal string? ParentId { get; set; }
+	internal IReadOnlyList<string> ChildIds { get; set; }
+	internal Func<Element, bool?>? Matcher { get; set; }
 
-	private string? ParentId { get; set; }
-	private IReadOnlyList<string> ChildIds { get; set; }
-	private IReadOnlyDictionary<string, object> Properties { get; set; }
 	private IReadOnlyDictionary<string, List<Element>> TargetIdToElement { get; set; }
 	private Action<string> OnAccessProperty { get; }
 }
