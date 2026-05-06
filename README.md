@@ -1,3 +1,6 @@
+> [!WARNING]
+> **Not Actively Maintained:** If you'd like to add support for new .NET versions, feel free to open a PR and I'll merge it.
+
 <img align="left" width="80" height="80" src="logo.png" alt="WPF Pilot logo">
 
 # WPF Pilot
