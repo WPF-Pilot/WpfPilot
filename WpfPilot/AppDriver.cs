@@ -194,9 +194,17 @@ public sealed class AppDriver : IDisposable
 		var delayMsByTryCount = new int[] { 25, 100, 500, 1000, 2000 };
 		while (Environment.TickCount - start < timeoutMs)
 		{
-			var element = DoGetElement(matcher, timeoutMs);
-			if (element is not null)
-				return element;
+			try
+			{
+				var element = DoGetElement(matcher, timeoutMs);
+				if (element is not null)
+					return element;
+			}
+			catch (PendingResultException)
+			{
+				// The UI thread is momentarily blocked by a modal dialog (e.g. a transient boot/sign-in
+				// screen). Keep retrying until the overall timeout elapses rather than failing fast.
+			}
 
 			Task.Delay(tryCount < delayMsByTryCount.Length ? delayMsByTryCount[tryCount] : 1000).GetAwaiter().GetResult();
 			tryCount++;
@@ -236,9 +244,17 @@ public sealed class AppDriver : IDisposable
 		var delayMsByTryCount = new int[] { 25, 100, 500, 1000, 2000 };
 		while (Environment.TickCount - start < timeoutMs)
 		{
-			var element = DoGetElement(matcher, timeoutMs);
-			if (element is not null)
-				return (T) Activator.CreateInstance(typeof(T), element)!;
+			try
+			{
+				var element = DoGetElement(matcher, timeoutMs);
+				if (element is not null)
+					return (T) Activator.CreateInstance(typeof(T), element)!;
+			}
+			catch (PendingResultException)
+			{
+				// The UI thread is momentarily blocked by a modal dialog (e.g. a transient boot/sign-in
+				// screen). Keep retrying until the overall timeout elapses rather than failing fast.
+			}
 
 			Task.Delay(tryCount < delayMsByTryCount.Length ? delayMsByTryCount[tryCount] : 1000).GetAwaiter().GetResult();
 			tryCount++;
@@ -281,9 +297,16 @@ public sealed class AppDriver : IDisposable
 		var delayMsByTryCount = new int[] { 25, 100, 500, 1000, 2000 };
 		while (Environment.TickCount - start < timeoutMs)
 		{
-			var elements = DoGetElements(matcher, timeoutMs);
-			if (elements.Count != 0)
-				return elements;
+			try
+			{
+				var elements = DoGetElements(matcher, timeoutMs);
+				if (elements.Count != 0)
+					return elements;
+			}
+			catch (PendingResultException)
+			{
+				// Transient modal dialog blocking the UI thread; keep retrying until timeout.
+			}
 
 			Task.Delay(tryCount < delayMsByTryCount.Length ? delayMsByTryCount[tryCount] : 1000).GetAwaiter().GetResult();
 			tryCount++;
@@ -327,9 +350,16 @@ public sealed class AppDriver : IDisposable
 		var delayMsByTryCount = new int[] { 25, 100, 500, 1000, 2000 };
 		while (Environment.TickCount - start < timeoutMs)
 		{
-			var elements = DoGetElements(matcher, timeoutMs);
-			if (elements.Count != 0)
-				return elements.Select(x => (T) Activator.CreateInstance(typeof(T), x)!).ToList();
+			try
+			{
+				var elements = DoGetElements(matcher, timeoutMs);
+				if (elements.Count != 0)
+					return elements.Select(x => (T) Activator.CreateInstance(typeof(T), x)!).ToList();
+			}
+			catch (PendingResultException)
+			{
+				// Transient modal dialog blocking the UI thread; keep retrying until timeout.
+			}
 
 			Task.Delay(tryCount < delayMsByTryCount.Length ? delayMsByTryCount[tryCount] : 1000).GetAwaiter().GetResult();
 			tryCount++;
@@ -530,7 +560,7 @@ public sealed class AppDriver : IDisposable
 		if (responseValue is string s)
 		{
 			if (s == "PendingResult")
-				throw new TimeoutException($"{nameof(GetElement)} timeout.");
+				throw new PendingResultException($"{nameof(GetElement)} timeout.");
 		}
 
 		List<Node> nodes = response;
@@ -569,7 +599,7 @@ public sealed class AppDriver : IDisposable
 		if (responseValue is string s)
 		{
 			if (s == "PendingResult")
-				throw new TimeoutException($"{nameof(GetElements)} timeout.");
+				throw new PendingResultException($"{nameof(GetElements)} timeout.");
 		}
 
 		List<Node> nodes = response;

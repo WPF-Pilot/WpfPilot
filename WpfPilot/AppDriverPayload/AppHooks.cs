@@ -207,11 +207,21 @@ internal static class AppHooks
 	[HarmonyPatch(typeof(Window), "ShowDialog")]
 	public static class PatchWindowShowDialog
 	{
-		// We need a way to know if `ShowDialog` was called, to avoid blocking.
+		// We need a way to know if a modal `ShowDialog` is currently open, to avoid blocking.
+		// `ShowDialog` runs a nested message loop and does not return until the dialog closes, so
+		// the flag is set on entry and cleared once the call returns (via Postfix/Finalizer). This
+		// keeps `ShowDialogCalled` scoped to the dialog's actual lifetime instead of latching it
+		// `true` indefinitely after the first dialog is ever shown.
 		public static bool Prefix(Window __instance)
 		{
 			AppHooks.ShowDialogCalled = true;
 			return true;
+		}
+
+		// Runs even if `ShowDialog` throws, ensuring the flag does not stay latched.
+		public static void Finalizer()
+		{
+			AppHooks.ShowDialogCalled = false;
 		}
 	}
 
