@@ -23,6 +23,11 @@ WpfPilot/WpfPilotResources/x86/
 .idea/
 *_wpftmp.csproj
 
+# Prebuilt native injection binaries shipped in the NuGet package must be tracked
+# (they are required at runtime and would otherwise be excluded by the *.dll/*.pdb rules above).
+!WpfPilot/contentFiles/any/any/WpfPilotResources/**/*.dll
+!WpfPilot/contentFiles/any/any/WpfPilotResources/**/*.pdb
+
 # Temp-Files from Verify
 *.received.txt
 
