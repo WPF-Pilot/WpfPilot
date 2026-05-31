@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>WpfPilot.Mac</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+
+    <!--
+      The Windows WpfPilot package is built with TreatWarningsAsErrors + StyleCop
+      enforced repo-wide. This cross-platform sibling intentionally relaxes those so
+      it can be iterated on quickly and built on macOS without the WPF SDK. It only
+      reuses three platform-agnostic files from WpfPilot (wire format) and adds the
+      macOS automation transport/driver/server.
+    -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunAnalyzers>false</RunAnalyzers>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" />
+  </ItemGroup>
+
+  <!--
+    Reuse the platform-agnostic wire-format helpers from the Windows WpfPilot project
+    verbatim, so the macOS transport speaks the same MessagePacker envelope.
+  -->
+  <ItemGroup>
+    <Compile Include="../WpfPilot/Interop/MessagePacker.cs" Link="Shared/MessagePacker.cs" />
+    <Compile Include="../WpfPilot/Interop/RobustContractResolver.cs" Link="Shared/RobustContractResolver.cs" />
+    <Compile Include="../WpfPilot/Interop/WrappedArg.cs" Link="Shared/WrappedArg.cs" />
+  </ItemGroup>
+
+</Project>

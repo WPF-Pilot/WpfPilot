@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>WpfPilot.Mac.Driver</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+
+    <!-- See WpfPilot.Mac.csproj: this cross-platform sibling relaxes the repo-wide StyleCop +
+         TreatWarningsAsErrors so it can be iterated on and built on macOS without the WPF SDK. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunAnalyzers>false</RunAnalyzers>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!--
+    The E2E test project references THIS project to drive an application that hosts
+    WpfPilot.Mac.Server. The shared wire format (protocol + transport + marshaling) lives in
+    WpfPilot.Mac, so the typed DTOs round-trip cleanly between driver and server.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\WpfPilot.Mac\WpfPilot.Mac.csproj" />
+  </ItemGroup>
+
+</Project>

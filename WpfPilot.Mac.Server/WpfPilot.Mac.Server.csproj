@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>WpfPilot.Mac.Server</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+
+    <!-- See WpfPilot.Mac.csproj: this cross-platform sibling relaxes the repo-wide StyleCop +
+         TreatWarningsAsErrors so it can be iterated on and built on macOS without the WPF SDK. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunAnalyzers>false</RunAnalyzers>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!--
+    The application under test (e.g. Logos.app) references THIS project to host the in-process
+    automation endpoint. It deliberately does NOT depend on the test-side WpfPilot.Mac.Driver, so no
+    test/launch code is pulled into the shipping app. The shared wire format lives in WpfPilot.Mac.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\WpfPilot.Mac\WpfPilot.Mac.csproj" />
+  </ItemGroup>
+
+</Project>

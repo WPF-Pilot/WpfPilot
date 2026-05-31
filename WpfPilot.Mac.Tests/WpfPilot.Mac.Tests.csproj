@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>WpfPilot.Mac.Tests</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunAnalyzers>false</RunAnalyzers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WpfPilot.Mac.Driver\WpfPilot.Mac.Driver.csproj" />
+    <ProjectReference Include="..\WpfPilot.Mac.Server\WpfPilot.Mac.Server.csproj" />
+    <ProjectReference Include="..\WpfPilot.Mac.SampleHost\WpfPilot.Mac.SampleHost.csproj" />
+  </ItemGroup>
+
+</Project>
