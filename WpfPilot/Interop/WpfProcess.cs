@@ -42,6 +42,7 @@ internal sealed class WpfProcess
 
 		FileVersionInfo? systemRuntimeVersion = null;
 		FileVersionInfo? wpfGFXVersion = null;
+		var hasCoreClr = false;
 
 		foreach (var module in modules)
 		{
@@ -49,11 +50,18 @@ internal sealed class WpfProcess
 				wpfGFXVersion = FileVersionInfo.GetVersionInfo(module.szExePath);
 			else if (module.szModule.StartsWith("System.Runtime.dll", StringComparison.OrdinalIgnoreCase))
 				systemRuntimeVersion = FileVersionInfo.GetVersionInfo(module.szExePath);
+			else if (module.szModule.StartsWith("coreclr.dll", StringComparison.OrdinalIgnoreCase) ||
+				module.szModule.StartsWith("hostfxr.dll", StringComparison.OrdinalIgnoreCase) ||
+				module.szModule.StartsWith("hostpolicy.dll", StringComparison.OrdinalIgnoreCase))
+				hasCoreClr = true;
 		}
 
 		var relevantVersionInfo = systemRuntimeVersion ?? wpfGFXVersion;
 		if (relevantVersionInfo is null)
-			return "netframework";
+			// When the managed runtime version modules can't be identified (e.g. they load from a
+			// non-default location), fall back to detecting CoreCLR by its native host modules so we
+			// don't incorrectly classify a .NET Core/.NET 5+ process as .NET Framework.
+			return hasCoreClr ? "dotnet" : "netframework";
 
 		// Modified from the standard snoop injector. The injector DLLs were also modified to match.
 		var productVersion = TryParseVersion(relevantVersionInfo.ProductVersion ?? string.Empty);
