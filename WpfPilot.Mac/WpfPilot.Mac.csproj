@@ -1,11 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\WpfPilot.Mac.Package.props" />
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>WpfPilot.Mac</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <IsPackable>false</IsPackable>
+    <Description>Cross-platform (macOS) automation transport for WpfPilot: the shared wire format and in-process endpoint used to drive a .NET app on macOS where the Windows injector cannot run.</Description>
 
     <!--
       The Windows WpfPilot package is built with TreatWarningsAsErrors + StyleCop

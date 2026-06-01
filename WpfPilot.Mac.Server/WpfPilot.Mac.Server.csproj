@@ -1,11 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="..\WpfPilot.Mac.Package.props" />
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>WpfPilot.Mac.Server</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <IsPackable>false</IsPackable>
+    <Description>App-side half of WpfPilot's macOS automation. The application under test references this to host the in-process automation endpoint; it deliberately pulls in no test/driver code.</Description>
 
     <!-- See WpfPilot.Mac.csproj: this cross-platform sibling relaxes the repo-wide StyleCop +
          TreatWarningsAsErrors so it can be iterated on and built on macOS without the WPF SDK. -->

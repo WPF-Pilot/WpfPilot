@@ -9,10 +9,12 @@ return BuildRunner.Execute(args, build =>
 	build.AddDotNetTargets(
 		new DotNetBuildSettings
 		{
-			// Only the WpfPilot package project is built/packed here. The native projects
-			// (WpfPilot.InjectionDll.vcxproj, WpfPilot.Injector) cannot be built with the
-			// dotnet CLI and their prebuilt binaries are committed under WpfPilot/contentFiles.
-			SolutionName = "WpfPilot/WpfPilot.csproj",
+			// Build/pack the Windows WpfPilot package plus the three cross-platform macOS automation
+			// packages (WpfPilot.Mac, .Server, .Driver). The native projects
+			// (WpfPilot.InjectionDll.vcxproj, WpfPilot.Injector) cannot be built with the dotnet CLI
+			// and their prebuilt binaries are committed under WpfPilot/contentFiles, so they are kept
+			// out of this publish solution.
+			SolutionName = "WpfPilot.Publish.sln",
 			NuGetApiKey = Environment.GetEnvironmentVariable("NUGET_API_KEY"),
 			PackageSettings = new DotNetPackageSettings
 			{

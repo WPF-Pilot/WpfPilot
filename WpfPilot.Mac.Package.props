@@ -1,0 +1,31 @@
+<Project>
+
+  <!--
+    Shared NuGet metadata for the cross-platform macOS automation packages
+    (WpfPilot.Mac, WpfPilot.Mac.Server, WpfPilot.Mac.Driver). These ship the macOS analog of the
+    Windows WpfPilot injector: an in-process automation server hosted by the app under test plus a
+    typed driver used by tests. Unlike the Windows package they are plain net10.0 libraries, so a
+    net10.0-macos consumer resolves them from lib/net10.0.
+  -->
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <VersionPrefix>3.2.1</VersionPrefix>
+    <Authors>WpfPilot</Authors>
+    <Copyright>Copyright (c) 2024</Copyright>
+    <PackageProjectUrl>https://wpfpilot.dev</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/WPF-Pilot/WpfPilot.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Automation;macOS;WPF;Test;UIA;WpfPilot</PackageTags>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageIcon>logo.png</PackageIcon>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)LICENSE.txt" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)logo.png" Pack="true" PackagePath="" Visible="false" />
+  </ItemGroup>
+
+</Project>
